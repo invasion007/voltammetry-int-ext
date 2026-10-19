@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>伏安法测电阻 · 内接与外接 · 可交互课件</title>
+<style>
+  :root{
+    /* A · Manim 基调：纯黑底 + 白线为主 + Manim 官方色常量
+       红 = 电流表 / 偏大      蓝 = 电压表 / 偏小      黄 = 结论量 */
+    --bg:#000000; --bg2:#0a0a0a; --panel:#0e0e0e; --line:#242424; --line2:#383838;
+    --ink:#FFFFFF; --ink2:#B0B0B0; --muted:#888888;
+    --red:#FC6255; --blue:#58C4DD; --yellow:#FFFF00; --gold:#F0AC5F; --green:#83C167;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--bg); color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC","WenQuanYi Zen Hei",sans-serif; overflow:hidden;}
+  .app{display:grid; grid-template-rows:auto auto 1fr auto auto; height:100vh;}
+
+  header{position:relative; padding:7px 18px 6px; background:var(--bg2);
+    border-bottom:1px solid var(--line); height:64px; overflow:hidden;}
+  header .row1{display:flex; align-items:center; gap:10px; height:22px;}
+  header .row2{display:flex; align-items:center; height:22px; margin-top:2px; padding-right:76px;}
+  header h1{font-size:16px; margin:0; font-weight:600; letter-spacing:.5px; white-space:nowrap; line-height:22px;}
+  .act{font-size:12.5px; color:var(--yellow); border:1px solid var(--line2); border-radius:10px;
+    padding:0 9px; height:20px; line-height:18px; white-space:nowrap;}
+  .tag{font-size:12px; border:1px solid var(--line2); border-radius:10px; padding:0 9px;
+    height:20px; line-height:18px; white-space:nowrap; color:var(--ink2);}
+  .steptitle{font-size:15px; color:var(--ink); font-weight:600; line-height:22px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .stepsn{position:absolute; right:18px; top:10px; font-size:13px; color:var(--ink2); font-variant-numeric:tabular-nums;}
+
+  .topnav{display:flex; align-items:center; gap:5px; padding:5px 14px 6px;
+    background:var(--bg2); border-bottom:1px solid var(--line); overflow-x:auto; overflow-y:hidden;}
+  .topnav .grouplab{flex:0 0 auto; font-size:11px; letter-spacing:.6px; color:var(--muted); font-weight:600; white-space:nowrap;}
+  .topnav .sep{flex:0 0 auto; width:1px; height:15px; background:var(--line2); margin:0 5px;}
+  .topnav a{flex:0 0 auto; min-width:27px; height:22px; padding:0 7px; display:inline-flex; align-items:center; justify-content:center;
+    font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink2); background:#141414;
+    border:1px solid var(--line2); border-radius:6px; cursor:pointer;}
+  .topnav a:hover{background:#1e1e1e; color:var(--ink);}
+  .topnav a.on{background:rgba(255,255,0,0.12); border-color:var(--yellow); color:var(--yellow); font-weight:700;}
+
+  .stage{display:grid; grid-template-columns:1fr 316px; min-height:0;}
+  .canvaswrap{position:relative; min-width:0; min-height:0; padding:6px 8px 0 8px;}
+  canvas{display:block; width:100%; height:100%; cursor:default; touch-action:none;}
+  .hint{padding:6px 20px 0 20px; font-size:12.5px; color:var(--muted); height:42px; overflow:hidden;}
+  .hint b{color:var(--yellow); font-weight:600;}
+
+  aside{background:var(--panel); border-left:1px solid var(--line); padding:10px 12px 14px; overflow-y:auto; min-height:0;}
+  aside h3{font-size:12px; color:var(--muted); margin:13px 0 6px; font-weight:600; letter-spacing:.5px;}
+  aside h3:first-child{margin-top:2px;}
+  .rd{display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:3px 0;
+    font-size:12.5px; color:var(--ink2); border-bottom:1px dashed #242424;}
+  .rd span{white-space:nowrap;}
+  .rd b{font-size:14px; color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .rd b.red{color:var(--red);} .rd b.blue{color:var(--blue);} .rd b.yellow{color:var(--yellow);}
+  .rd b.gold{color:var(--gold);} .rd b.grey{color:var(--muted);} .rd b.ok{color:var(--green);} .rd b.bad{color:var(--red);}
+  .total{margin-top:8px; padding:8px 10px; border:1px solid var(--line2); border-radius:8px; background:#141414;}
+  .total .lab{font-size:12px; color:var(--muted); display:block; margin-bottom:2px;}
+  .total b{font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.3px;}
+  .total b.ok{color:var(--green);} .total b.warn{color:var(--gold);} .total b.bad{color:var(--red);}
+  .formula{font-size:13.5px; color:var(--ink); background:#141414; border:1px solid var(--line2);
+    border-radius:8px; padding:8px 10px; line-height:1.6; word-break:break-word;}
+  .note{font-size:12.5px; color:var(--ink2); line-height:1.66;}
+  .note b{color:var(--yellow); font-weight:600;}
+  .grp{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .grp .lab{font-size:12.5px; color:var(--muted);}
+  button{font-family:inherit; font-size:12.5px; color:var(--ink2); background:#141414;
+    border:1px solid var(--line2); border-radius:6px; padding:5px 10px; cursor:pointer; white-space:nowrap;}
+  button:hover{background:#1e1e1e; color:var(--ink);}
+  button.on{background:rgba(255,255,0,0.12); border-color:var(--yellow); color:var(--yellow); font-weight:700;}
+  button.main{background:#1a1a1a; color:var(--ink);}
+  .hidden{display:none !important;}
+
+  footer{display:flex; align-items:center; align-content:flex-start; gap:8px; flex-wrap:wrap; row-gap:6px;
+    padding:8px 14px 9px; background:var(--bg2); border-top:1px solid var(--line);
+    height:96px; overflow-y:auto;}
+  .bar{position:relative; flex:1 1 90px; min-width:70px; height:6px; background:#141414; border-radius:3px;}
+  .bar i{display:block; height:100%; width:0; background:var(--yellow); border-radius:3px;}
+  .slider{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);}
+  .slider input[type=range]{width:118px; accent-color:#4a4a4a;}
+  .slider b{color:var(--ink); font-variant-numeric:tabular-nums; min-width:76px; text-align:right;}
+
+  @media (max-width: 1080px){
+    .stage{grid-template-columns:1fr 272px;}
+    .slider input[type=range]{width:92px;}
+  }
+  @media (max-width: 760px){
+    .stage{grid-template-columns:1fr; grid-template-rows:1fr auto;}
+    aside{border-left:none; border-top:1px solid var(--line); max-height:26vh;}
+    .canvaswrap{padding:3px 4px 0 4px;}
+    .hint{padding:3px 10px 0 10px; height:52px; font-size:11.5px; line-height:1.36;}
+    header{padding:5px 10px 4px; height:56px;}
+    header .row1{height:20px; gap:7px;} header .row2{height:20px;}
+    header h1{font-size:14px; line-height:20px;} .steptitle{font-size:12.5px; line-height:20px;}
+    .stepsn{right:10px; top:7px; font-size:12px;}
+    .topnav{padding:4px 8px 5px;}
+    footer{padding:6px 10px 7px; gap:6px; height:118px;}
+    .slider input[type=range]{width:76px;}
+    .slider b{min-width:62px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="row1">
+      <h1>伏安法测电阻 · 内接与外接</h1>
+      <span class="act" id="actTag">第一幕</span>
+      <span class="tag" id="modeTag">内接法</span>
+    </div>
+    <div class="row2"><span class="steptitle" id="stepTitle">—</span></div>
+    <span class="stepsn" id="stepSn">1 / 17</span>
+  </header>
+
+  <nav class="topnav" id="toc" aria-label="步骤导航"></nav>
+
+  <div class="stage">
+    <div class="canvaswrap"><canvas id="cv"></canvas></div>
+    <aside>
+      <h3>① 这一刻的读数</h3>
+      <div id="rdGroup1"></div>
+
+      <h3>② 这只表的内阻</h3>
+      <div id="rdGroup2"></div>
+
+      <div class="total"><span class="lab">关键一句</span><b id="rdVerdict" class="ok">—</b></div>
+
+      <h3>③ 白话一句</h3>
+      <div id="rdGroup3"></div>
+
+      <h3>这一刻的公式</h3>
+      <div class="formula" id="rdFormula">—</div>
+      <h3>提示</h3>
+      <div class="note" id="rdNote"></div>
+      <div class="note" style="margin-top:6px;color:#888888">键盘 ← → 翻步，Home / End 到头；<b style="color:#F0AC5F">数字键 1~3</b> 换表头。画布上 <b style="color:#F0AC5F">Rₓ 的滑轨</b>可以直接拖。</div>
+    </aside>
+  </div>
+
+  <div class="hint" id="hint"></div>
+
+  <footer>
+    <button id="btnPrev">◀ 上一步</button>
+    <button id="btnNext" class="main">下一步 ▶</button>
+    <button id="btnReset">↺ 复位本步</button>
+    <div class="bar" id="prog"><i></i></div>
+
+    <div class="slider" id="wrap_rx"><span>Rₓ</span>
+      <input type="range" id="rgRx" min="0" max="1" step="0.002" value="0.4">
+      <b id="lbRx">22 Ω</b></div>
+
+    <div class="slider" id="wrap_rs"><span>串联 R_s</span>
+      <input type="range" id="rgRs" min="0" max="100" step="1" value="20">
+      <b id="lbRs">20 Ω</b></div>
+
+    <div class="grp" id="wrap_head"><span class="lab">换表头</span>
+      <span id="headBtns"></span></div>
+
+    <div class="grp" id="wrap_ideal"><span class="lab">表</span>
+      <span id="idealBtns"></span></div>
+  </footer>
+</div>
+
+<script>
+
+
+(function () {
+'use strict';
+
+var EMF = 3.0;
+var A_RANGE = 0.6;
+var V_RANGE = 3.0;
+var RX_MIN = 1, RX_MAX = 5000;
+var RS_MIN = 0, RS_MAX = 100, RS_DEF = 20;
+
+var HEADS = [
+{ key: 'h1', lab: '10 mA / 10 Ω',  Rg: 10,  Ig: 0.010,   title: '老式表头' },
+{ key: 'h2', lab: '1 mA / 30 Ω',   Rg: 30,  Ig: 0.001,   title: '学生表头' },
+{ key: 'h3', lab: '50 μA / 200 Ω', Rg: 200, Ig: 0.00005, title: '灵敏表头' }
+];
+
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function clamp01(v) { return clamp(v, 0, 1); }
+
+function head(key) {
+for (var i = 0; i < HEADS.length; i++) { if (HEADS[i].key === key) { return HEADS[i]; } }
+return HEADS[1];
+}
+function meters(key) {
+var h = head(key);
+return { Rg: h.Rg, Ig: h.Ig, Ug: h.Rg * h.Ig, RA: h.Rg * h.Ig / A_RANGE, RV: V_RANGE / h.Ig, lab: h.lab };
+}
+var IDEAL = { Rg: 0, Ig: 1, Ug: 0, RA: 0, RV: Infinity, lab: '理想表' };
+
+function asM(m) {
+if (!m) { return meters('h2'); }
+return (typeof m === 'string') ? meters(m) : m;
+}
+function metersOf(st) { return st && st.ideal ? IDEAL : meters(st && st.hk); }
+function rp(rx, m) { return isFinite(m.RV) ? rx * m.RV / (rx + m.RV) : rx; }
+
+function rxOf(t) { return RX_MIN * Math.pow(RX_MAX / RX_MIN, clamp01(t)); }
+function tOfRx(rx) { return Math.log(clamp(rx, RX_MIN, RX_MAX) / RX_MIN) / Math.log(RX_MAX / RX_MIN); }
+
+function intRead(rx, rs, mm) {
+var m = asM(mm);
+var I = EMF / (rs + rx + m.RA);
+var U = I * (rx + m.RA);
+return { I: I, U: U, Ux: I * rx, Ua: I * m.RA, R: U / I, RA: m.RA, RV: m.RV };
+}
+
+function extRead(rx, rs, mm) {
+var m = asM(mm);
+var Rp = rp(rx, m);
+var I = EMF / (rs + Rp);
+var U = I * Rp;
+return { I: I, U: U, Irx: U / rx, Iv: U / m.RV, R: U / I, RA: m.RA, RV: m.RV };
+}
+
+function deltaInt(rx, mm) { return asM(mm).RA / rx; }
+function deltaExt(rx, mm) { var m = asM(mm); return -rx / (rx + m.RV); }
+function deltaExtAbs(rx, mm) { var m = asM(mm); return rx / (rx + m.RV); }
+
+function rCrit(mm) {
+var m = asM(mm);
+if (m.RA <= 0) { return 0; }
+return (m.RA + Math.sqrt(m.RA * m.RA + 4 * m.RA * m.RV)) / 2;
+}
+function rCritApprox(mm) { var m = asM(mm); return Math.sqrt(m.RA * m.RV); }
+
+function pickByError(rx, mm) { return Math.abs(deltaInt(rx, mm)) <= Math.abs(deltaExt(rx, mm)) ? 'int' : 'ext'; }
+
+function touchTest(rx, rs, mm) {
+var a = intRead(rx, rs, mm), b = extRead(rx, rs, mm);
+var dU = Math.abs(a.U - b.U) / b.U;
+var dI = Math.abs(a.I - b.I) / b.I;
+return {
+dU: dU, dI: dI, pick: dU > dI ? 'ext' : 'int',
+Uint: a.U, Uext: b.U, Iint: a.I, Iext: b.I,
+ratio: (dI > 0) ? dU / dI : Infinity
+};
+}
+
+function voltMeasure(rx, rs, mm) {
+var m = asM(mm);
+var trueU = EMF * rx / (rs + rx);
+var Rp = rp(rx, m);
+var U = EMF * Rp / (rs + Rp);
+return { trueU: trueU, U: U, err: (U - trueU) / trueU, RV: m.RV, Iv: U / m.RV };
+}
+
+function ampMeasure(rx, rs, mm) {
+var m = asM(mm);
+var trueI = EMF / (rs + rx);
+var I = EMF / (rs + rx + m.RA);
+return { trueI: trueI, I: I, err: (I - trueI) / trueI, RA: m.RA, Ua: I * m.RA };
+}
+
+function fmtR(v) {
+if (!isFinite(v)) { return '—'; }
+if (v >= 1000) { return (v / 1000).toFixed(2) + ' kΩ'; }
+if (v >= 100) { return v.toFixed(0) + ' Ω'; }
+if (v >= 10) { return v.toFixed(1) + ' Ω'; }
+return v.toFixed(2) + ' Ω';
+}
+function fmtU(v) {
+if (Math.abs(v) < 1e-12) { return '0 V'; }
+if (Math.abs(v) < 1) { return (v * 1000).toFixed(1) + ' mV'; }
+return v.toFixed(2) + ' V';
+}
+function fmtI(v) {
+if (Math.abs(v) < 1e-12) { return '0 A'; }
+if (Math.abs(v) < 1e-3) { return (v * 1e6).toFixed(1) + ' μA'; }
+if (Math.abs(v) < 1) { return (v * 1000).toFixed(2) + ' mA'; }
+return v.toFixed(3) + ' A';
+}
+function fmtP(v, d) { return (v * 100).toFixed(d === undefined ? 2 : d) + '%'; }
+function fmtS(v) { return (v >= 0 ? '+' : '−') + fmtP(Math.abs(v), 2); }
+function fmtX(v) { return v.toFixed(2) + ' 倍'; }
+
+var D_MIN = 1e-4, D_MAX = 1;
+function dPos(d) {
+var a = Math.abs(d);
+if (a < D_MIN) { a = D_MIN; }
+if (a > D_MAX) { a = D_MAX; }
+return (Math.log(a / D_MIN) / Math.log(D_MAX / D_MIN));
+}
+
+function explain(key) {
+var T = {
+ask: '伏安法就是量出它两端的电压 U、流过它的电流 I，用 R = U / I 反推。麻烦在于：两个表都不是"只看看、不插手"的旁观者。',
+ideal: '把两只表换成理想表（R_A = 0、R_V → ∞），R = U / I 就精确了。真表做不到这一点 —— 后面所有的误差，根子都在这里。',
+pair: '同一套器材，电流表可以放在电压表"里面"（内接），也可以放在"外面"（外接）。放的位置不同，被多读进去的那一段就不同。',
+int: '内接法：电压表的两根线跨在"Rₓ + 电流表"上。它读到的不是 Rₓ 两端的电压，而是 Rₓ 两端电压加上电流表自己吃掉的那一份。',
+int2: '电流表串在回路里，同一个 I 既流过它、也流过 Rₓ。它吃掉 I·R_A —— 这一份电压被电压表老实记进了读数里，而 Rₓ 根本没用到它。',
+int3: '所以 R测 = U/I = Rₓ + R_A，永远偏大，多出来的正好是 R_A。Rₓ 越大，R_A 占的比例越小 —— 内接法适合大电阻。',
+ext: '外接法：电压表只跨在 Rₓ 两端，电压读得准。但电流表装在电压表外面，它读到的电流多了一条岔路。',
+ext2: '电压表不是断开，它自己要走 U/R_V 的电流。电流表读的是"流过 Rₓ 的 + 流过电压表的"，于是把 Rₓ 的电流读大了。',
+ext3: '所以 R测 = U/I = Rₓ∥R_V，永远偏小。Rₓ 越小，R_V 显得越大，误差越小 —— 外接法适合小电阻。',
+curve: '把两种接法的相对误差画在同一张图上：内接的误差 ∝ 1/Rₓ，外接的误差 ∝ Rₓ，两条线必然相交，交点就是临界电阻。',
+choice: '交点 R₀ = √(R_A·R_V)。Rₓ 比它大就用内接，比它小就用外接。口诀：大内小外。',
+touch: '不知道 Rₓ 多大？两种接法各试一次，看哪个表的示数变化更明显：电压表变化大说明电流表分压碍事（Rₓ 小），改外接；电流表变化大说明电压表分流碍事（Rₓ 大），改内接。',
+near: '临界附近两种都差得不多，也都不算好：换更准的表（R_A 更小、R_V 更大）、换量程，或者改用半偏法、电桥。',
+volt: '电压表并联在 Rₓ 上测电压。它一接上就分走电流，把被测那一段"拉低"一点 —— 读数总比不接表时小，R_V 越大越接近真值。',
+amp: '电流表串联进回路测电流。它的内阻串进来了，回路电流比不接表时小 —— 读数总偏小，R_A 越小越接近真值。',
+final: '一句话：误差不来自"读数读错了"，而来自"表自己也在电路里"。内接多读了 I·R_A 的电压，外接多读了 U/R_V 的电流。'
+};
+return T[key] || '';
+}
+
+function runSelfTest() {
+var fails = [], n = 0;
+function ok(cond, msg) { n++; if (!cond) { fails.push(msg); } }
+function near(a, b, tol, msg) { ok(Math.abs(a - b) <= (tol || 1e-9), msg + '（' + a + ' vs ' + b + '）'); }
+
+var keys = ['h1', 'h2', 'h3'], i, j, mk, m;
+for (i = 0; i < keys.length; i++) {
+mk = keys[i]; m = meters(mk);
+near(m.RA, m.Rg * m.Ig / A_RANGE, 1e-15, mk + ' R_A = Rg·Ig/I量程');
+near(m.RV, V_RANGE / m.Ig, 1e-9, mk + ' R_V = U量程/Ig');
+ok(m.RA > 0 && m.RV > 0, mk + ' 内阻为正');
+
+for (j = 0; j < 6; j++) {
+var rx = [1, 5, 22, 100, 900, 5000][j], rs = [0, 20, 100][j % 3];
+var a = intRead(rx, rs, mk);
+near(a.R, rx + m.RA, 1e-9, mk + ' 内接 R测=' + rx + 'Ω');
+near(a.U / a.I, a.R, 1e-12, mk + ' 内接 U/I 自洽');
+near(a.Ux + a.Ua, a.U, 1e-12, mk + ' 内接 U测 = U_Rx + I·R_A');
+near((a.R - rx) / rx, deltaInt(rx, mk), 1e-12, mk + ' 内接 δ 公式');
+ok(a.Ux / a.U < 1, mk + ' 内接 多读一段为正');
+
+var b = extRead(rx, rs, mk);
+near(b.R, rp(rx, m), 1e-9, mk + ' 外接 R测=' + rx + 'Ω');
+near(b.U / b.I, b.R, 1e-12, mk + ' 外接 U/I 自洽');
+near(b.Irx + b.Iv, b.I, 1e-12, mk + ' 外接 I测 = I_Rx + I_V');
+near((b.R - rx) / rx, deltaExt(rx, mk), 1e-12, mk + ' 外接 δ 公式');
+
+ok(a.R > rx, mk + ' 内接恒偏大 @' + rx);
+ok(b.R < rx, mk + ' 外接恒偏小 @' + rx);
+}
+
+var r0 = rCrit(mk), r0a = rCritApprox(mk);
+near(deltaInt(r0, mk), -deltaExt(r0, mk), 1e-9, mk + ' R₀ 处两侧误差等大');
+near(r0 * r0 - m.RA * r0 - m.RA * m.RV, 0, 1e-6, mk + ' R₀ 满足方程');
+ok(Math.abs(r0 / r0a - 1) < 0.03, mk + ' R₀ ≈ √(R_A R_V)');
+ok(pickByError(r0 * 3, mk) === 'int', mk + ' Rₓ 大 → 内接');
+ok(pickByError(r0 / 3, mk) === 'ext', mk + ' Rₓ 小 → 外接');
+
+var idBad = 0, misBad = 0, checked = 0;
+for (j = 1; j <= 240; j++) {
+var t = j / 240, rr = rxOf(t), rsx = 20;
+var tt = touchTest(rr, rsx, mk);
+var Rp = rp(rr, m);
+if (Math.abs(tt.ratio - rsx / Rp) / (rsx / Rp) > 0.02) { idBad++; }
+
+if (Math.abs(Math.log(rr / rCrit(mk))) >= 0.5) {
+checked++;
+var tt2 = touchTest(rr, rCrit(mk), mk);
+if (tt2.pick !== pickByError(rr, mk)) { misBad++; }
+}
+}
+ok(idBad === 0, mk + ' 试触法恒等式 ΔU/ΔI = Rs/(Rₓ∥R_V)（偏差 ' + idBad + ' 处）');
+ok(misBad === 0, mk + ' 远临界且 Rs=R₀ 时试触法判据与误差判据一致（不一致 ' + misBad + '/' + checked + '）');
+
+ok(Math.abs(deltaExt(1, mk)) < 0.01, mk + ' 小电阻外接误差 < 1%');
+ok(deltaInt(5000, mk) < 0.01, mk + ' 大电阻内接误差 < 1%');
+}
+
+for (i = 0; i < keys.length; i++) {
+mk = keys[i];
+for (j = 0; j < 5; j++) {
+var rx2 = [1, 10, 100, 1000, 5000][j], rs2 = 20;
+var vm = voltMeasure(rx2, rs2, mk);
+ok(vm.U < vm.trueU + 1e-15, mk + ' 电压表读数 ≤ 真值 @' + rx2);
+ok(vm.err < 0, mk + ' 电压表误差为负 @' + rx2);
+var am = ampMeasure(rx2, rs2, mk);
+ok(am.I < am.trueI + 1e-15, mk + ' 电流表读数 ≤ 真值 @' + rx2);
+ok(am.err < 0, mk + ' 电流表误差为负 @' + rx2);
+}
+}
+
+ok(rCrit('h1') < rCrit('h2') && rCrit('h2') < rCrit('h3'), '表越好 R₀ 越大');
+
+for (j = 0; j < 6; j++) {
+var rx3 = [1, 10, 100, 900, 3000, 5000][j];
+near(intRead(rx3, 20, IDEAL).R, rx3, 1e-6, '理想表内接精确 @' + rx3);
+near(extRead(rx3, 20, IDEAL).R, rx3, 1e-6, '理想表外接精确 @' + rx3);
+ok(Math.abs(deltaInt(rx3, IDEAL)) < 1e-12, '理想表 δ内 = 0');
+ok(Math.abs(deltaExt(rx3, IDEAL)) < 1e-12, '理想表 δ外 = 0');
+}
+
+for (i = 0; i < keys.length; i++) {
+for (j = 0; j <= 60; j++) {
+var rxx = rxOf(j / 60);
+var ai = intRead(rxx, RS_DEF, keys[i]), ae = extRead(rxx, RS_DEF, keys[i]);
+ok(ai.U <= V_RANGE + 1e-9 && ae.U <= V_RANGE + 1e-9, keys[i] + ' 电压不出量程');
+ok(ai.I <= A_RANGE + 1e-9 && ae.I <= A_RANGE + 1e-9, keys[i] + ' 电流不出量程');
+}
+}
+
+for (j = 0; j <= 20; j++) { near(tOfRx(rxOf(j / 20)), j / 20, 1e-12, '对数滑杆可逆'); }
+ok(dPos(1e-4) === 0 && Math.abs(dPos(1) - 1) < 1e-12, '误差标尺端点');
+
+return { cases: n, nfail: fails.length, fails: fails };
+}
+
+window.VizPhys = {
+EMF: EMF, A_RANGE: A_RANGE, V_RANGE: V_RANGE,
+RX_MIN: RX_MIN, RX_MAX: RX_MAX, RS_MIN: RS_MIN, RS_MAX: RS_MAX, RS_DEF: RS_DEF,
+HEADS: HEADS, head: head, meters: meters, metersOf: metersOf, IDEAL: IDEAL,
+rxOf: rxOf, tOfRx: tOfRx, clamp: clamp, clamp01: clamp01,
+intRead: intRead, extRead: extRead, rp: rp,
+deltaInt: deltaInt, deltaExt: deltaExt, deltaExtAbs: deltaExtAbs,
+rCrit: rCrit, rCritApprox: rCritApprox, pickByError: pickByError,
+touchTest: touchTest, voltMeasure: voltMeasure, ampMeasure: ampMeasure,
+fmtR: fmtR, fmtU: fmtU, fmtI: fmtI, fmtP: fmtP, fmtS: fmtS, fmtX: fmtX,
+dPos: dPos, D_MIN: 1e-4, D_MAX: 1,
+explain: explain, runSelfTest: runSelfTest
+};
+})();
+
+
+
+(function () {
+'use strict';
+var P = window.VizPhys;
+
+var C = {
+bg: '#000000', ink: '#FFFFFF', grey: '#888888', dim: '#4a4a4a',
+red: '#FC6255', blue: '#58C4DD', yellow: '#FFFF00', gold: '#F0AC5F',
+green: '#83C167', purple: '#9A72AC'
+};
+var FONT = '"Microsoft YaHei","PingFang SC","Noto Sans SC","WenQuanYi Zen Hei",sans-serif';
+var texts = [];
+
+function rgb(hex, a) {
+var n = parseInt(hex.slice(1), 16);
+return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + (a === undefined ? 1 : a) + ')';
+}
+function txt(ctx, s, x, y, o) {
+o = o || {};
+var size = o.size || 12.5, align = o.align || 'left', weight = o.weight || 400;
+ctx.font = weight + ' ' + size + 'px ' + FONT;
+ctx.textAlign = align; ctx.textBaseline = o.base || 'middle';
+ctx.fillStyle = o.color || C.ink;
+if (o.alpha !== undefined) { ctx.globalAlpha = o.alpha; }
+ctx.fillText(s, x, y);
+if (o.alpha !== undefined) { ctx.globalAlpha = 1; }
+if (o.track !== false) {
+var w = ctx.measureText(s).width;
+var x0 = align === 'center' ? x - w / 2 : (align === 'right' ? x - w : x);
+texts.push({ x0: x0, x1: x0 + w, y: y, size: size, s: s });
+}
+return ctx.measureText(s).width;
+}
+function tw(ctx, s, size, weight) {
+ctx.font = (weight || 400) + ' ' + size + 'px ' + FONT;
+return ctx.measureText(s).width;
+}
+function line(ctx, x1, y1, x2, y2, o) {
+o = o || {};
+ctx.beginPath(); ctx.setLineDash(o.dash || []);
+ctx.lineWidth = o.w || 1.4; ctx.strokeStyle = o.color || C.ink;
+if (o.alpha !== undefined) { ctx.globalAlpha = o.alpha; }
+ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+ctx.setLineDash([]);
+if (o.alpha !== undefined) { ctx.globalAlpha = 1; }
+}
+function box(ctx, x, y, w, h, o) {
+o = o || {};
+if (o.fill) { ctx.fillStyle = o.fill; ctx.fillRect(x, y, w, h); }
+if (o.stroke) {
+ctx.strokeStyle = o.stroke; ctx.lineWidth = o.w || 1.4;
+if (o.dash) { ctx.setLineDash(o.dash); }
+ctx.strokeRect(x, y, w, h);
+ctx.setLineDash([]);
+}
+}
+function arrow(ctx, x1, y1, x2, y2, o) {
+o = o || {};
+var w = o.w || 2.2, col = o.color || C.ink;
+line(ctx, x1, y1, x2, y2, { color: col, w: w, alpha: o.alpha });
+var a = Math.atan2(y2 - y1, x2 - x1), h = o.head || (w * 3.4);
+ctx.beginPath(); ctx.moveTo(x2, y2);
+ctx.lineTo(x2 - h * Math.cos(a - 0.42), y2 - h * Math.sin(a - 0.42));
+ctx.lineTo(x2 - h * Math.cos(a + 0.42), y2 - h * Math.sin(a + 0.42));
+ctx.closePath(); ctx.fillStyle = col;
+if (o.alpha !== undefined) { ctx.globalAlpha = o.alpha; }
+ctx.fill(); ctx.globalAlpha = 1;
+}
+
+function layout(W, H) {
+var narrow = W < 700;
+if (narrow) {
+return {
+narrow: true,
+hero: { x: 0, y: 0, w: W, h: Math.round(H * 0.56) },
+scale: { x: 0, y: Math.round(H * 0.56), w: W, h: Math.round(H * 0.20) },
+curve: { x: 0, y: Math.round(H * 0.76), w: W, h: H - Math.round(H * 0.76) }
+};
+}
+var heroW = Math.round(Math.min(W * 0.60, W - 286));
+return {
+narrow: false,
+hero: { x: 0, y: 0, w: heroW, h: H },
+scale: { x: heroW, y: 0, w: W - heroW, h: Math.round(H * 0.46) },
+curve: { x: heroW, y: Math.round(H * 0.46), w: W - heroW, h: H - Math.round(H * 0.46) }
+};
+}
+
+function meter(ctx, x, y, r, o) {
+var col = o.color || C.ink;
+ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+ctx.fillStyle = C.bg; ctx.fill();
+ctx.lineWidth = 2.4; ctx.strokeStyle = col; ctx.stroke();
+ctx.beginPath();
+ctx.arc(x, y, r * 0.9, -135 * Math.PI / 180, 45 * Math.PI / 180);
+ctx.lineWidth = 1; ctx.strokeStyle = rgb(col, 0.3); ctx.stroke();
+var f = P.clamp01(o.f === undefined ? 0.5 : o.f);
+var a = (-135 + 180 * f) * Math.PI / 180;
+line(ctx, x, y, x + Math.cos(a) * r * 0.72, y + Math.sin(a) * r * 0.72, { color: col, w: 2 });
+ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill();
+txt(ctx, o.sym || 'A', x, y - r * 0.36, { size: r * 0.54, weight: 700, align: 'center', color: col });
+
+var side = o.side || 'below';
+if (side === 'below') {
+if (o.label) { txt(ctx, o.label, x, y + r + 13, { size: 11.5, align: 'center', color: rgb(col, 0.9) }); }
+if (o.note) { txt(ctx, o.note, x, y + r + 27, { size: 11, align: 'center', color: rgb(col, 0.62) }); }
+} else if (side === 'right') {
+var lx = x + r + 9;
+if (o.label) { txt(ctx, o.label, lx, y - (o.note ? 8 : 0), { size: 11.5, color: rgb(col, 0.9) }); }
+if (o.note) { txt(ctx, o.note, lx, y + 8, { size: 11, color: rgb(col, 0.62) }); }
+} else if (side === 'left') {
+var lx2 = x - r - 9;
+if (o.label) { txt(ctx, o.label, lx2, y - (o.note ? 8 : 0), { size: 11.5, align: 'right', color: rgb(col, 0.9) }); }
+if (o.note) { txt(ctx, o.note, lx2, y + 8, { size: 11, align: 'right', color: rgb(col, 0.62) }); }
+}
+}
+
+function resistor(ctx, x, y, w, h, o) {
+o = o || {};
+var col = o.color || C.ink;
+box(ctx, x, y, w, h, { stroke: col, w: 2.4 });
+var n = 7, i, xx, yy;
+ctx.beginPath(); ctx.strokeStyle = rgb(col, 0.5); ctx.lineWidth = 1.1;
+for (i = 0; i < n; i++) {
+xx = x + w * (i + 0.5) / n; yy = y + (i % 2 ? h * 0.76 : h * 0.24);
+if (i === 0) { ctx.moveTo(xx, yy); } else { ctx.lineTo(xx, yy); }
+}
+ctx.stroke();
+if (o.label) {
+var lw = tw(ctx, o.label, 12, 700) + 8;
+box(ctx, x + w / 2 - lw / 2, y + h / 2 - 9, lw, 18, { fill: C.bg });
+txt(ctx, o.label, x + w / 2, y + h / 2, { size: 12, weight: 700, align: 'center', color: col });
+}
+if (o.sub && !o.noSub) { txt(ctx, o.sub, x + w / 2, y + h + 14, { size: 11.5, align: 'center', color: rgb(col, 0.72) }); }
+}
+
+function battery(ctx, x, y, inside, compact) {
+line(ctx, x - 8, y - 15, x - 8, y + 15, { color: C.ink, w: 4.5 });
+line(ctx, x + 8, y - 8, x + 8, y + 8, { color: C.ink, w: 2.4 });
+var o = { compact: !!compact };
+if (inside) {
+txt(ctx, compact ? 'E' : ('E ' + P.EMF.toFixed(1) + ' V'), x + 30, y - 20,
+{ size: 10.5, color: rgb(C.ink, 0.7) });
+} else {
+txt(ctx, 'E', x - 22, y - 20, { size: 12.5, weight: 700, color: C.ink });
+if (!o.compact) { txt(ctx, P.EMF.toFixed(1) + ' V', x + 2, y - 20, { size: 11, color: rgb(C.ink, 0.62) }); }
+}
+}
+
+function flow(ctx, x, y, dir) {
+arrow(ctx, x - 9 * dir, y, x + 9 * dir, y, { color: rgb(C.ink, 0.5), w: 1.8, head: 6 });
+}
+
+function hero(ctx, R, st) {
+var m = P.metersOf(st), rx = st.rx, rs = st.rs;
+var mode = st.view;
+var pad = 18;
+var isIdeal = st.ideal;
+
+var a = P.intRead(rx, rs, m), b = P.extRead(rx, rs, m);
+var vm = P.voltMeasure(rx, rs, m), am = P.ampMeasure(rx, rs, m);
+
+var U = 0, I = 0, extraU = 0, extraI = 0;
+if (mode === 'int') { U = a.U; I = a.I; extraU = a.Ua; }
+else if (mode === 'ext') { U = b.U; I = b.I; extraI = b.Iv; }
+else if (mode === 'volt') { U = vm.U; I = U / rx; }
+else { I = am.I; U = I * rx; }
+
+var fA = P.clamp01(I / P.A_RANGE), fV = P.clamp01(U / P.V_RANGE);
+
+var yTitle = R.y + 16;
+var yBanner = R.y + 44;
+var small = R.w < 560;
+var compact = R.h < 430;
+var twoRow = R.w < 560 || R.h < 430;
+var titleMap = {
+int: small ? '内接法' : '内接法 · 电压表跨在「Rₓ + 电流表」上',
+ext: small ? '外接法' : '外接法 · 电压表只跨 Rₓ，电流表在它外面',
+volt: small ? '只测电压' : '只测电压 · 电压表并联在 Rₓ 上',
+amp: small ? '只测电流' : '只测电流 · 电流表串联进回路'
+};
+if (!compact) { txt(ctx, titleMap[mode] || '', R.x + pad, yTitle, { size: small ? 12 : 13, weight: 600 }); }
+
+if (st.banner) {
+if (compact) { yBanner = R.y + 20; }
+var bsize = R.w < 640 ? 14 : 16;
+var bw = tw(ctx, st.banner, bsize, 700);
+var bx = R.x + Math.max(pad, (R.w - bw) / 2);
+box(ctx, bx - 10, yBanner - bsize * 0.8, bw + 20, bsize * 1.6,
+{ stroke: rgb(C.yellow, 0.32), w: 1, fill: 'rgba(255,255,0,0.05)' });
+txt(ctx, st.banner, bx, yBanner, { size: bsize, weight: 700, color: C.yellow, track: false });
+}
+
+var mR = small ? 17 : 20;
+var ySlider = R.y + R.h - 14;
+var yRead = ySlider - (twoRow ? 40 : 22);
+var yDecomp = compact ? yRead : yRead - (small ? 40 : 46);
+var yNote = compact ? yRead - 28 : yDecomp - 16;
+
+var bandTop = R.y + (compact ? 52 : 66);
+var bandBot = yNote - (compact ? 14 : 22);
+var vBand = mR * 2 + (compact ? 12 : 30);
+var ringH = Math.min(bandBot - bandTop - vBand, 320);
+var ringMin = compact ? 34 : 84;
+if (ringH < ringMin) { ringH = ringMin; }
+var totalH = ringH + vBand;
+var top0 = bandTop + Math.round(Math.max(0, (bandBot - bandTop - totalH) * 0.50));
+var vCy = top0 + mR;
+var vTop = vCy + mR + 4;
+var ringTop = vTop + 12;
+var ringBot = ringTop + ringH;
+
+var ringW = Math.min(R.w - pad * 2 - 108, 620);
+var Lx = R.x + Math.round((R.w - ringW) / 2) + 8;
+var Rx = Lx + ringW;
+var rW = Math.max(54, Math.min(112, ringW * 0.28)), rH = small ? 24 : 30;
+
+var wire = { color: C.ink, w: 2.2, alpha: 0.9 };
+line(ctx, Lx, ringBot, Lx, ringTop, wire);
+line(ctx, Lx, ringTop, Rx, ringTop, wire);
+line(ctx, Rx, ringTop, Rx, ringBot, wire);
+line(ctx, Lx, ringBot, Rx, ringBot, wire);
+
+var xBat = Lx + ringW * 0.20, xRs = Lx + ringW * 0.62;
+line(ctx, xBat - 10, ringBot, xBat + 10, ringBot, { color: C.bg, w: 6 });
+battery(ctx, xBat, ringBot, small, compact);
+line(ctx, xRs - rW / 2, ringBot, xRs + rW / 2, ringBot, { color: C.bg, w: 6 });
+resistor(ctx, xRs - rW / 2, ringBot - rH / 2, rW, rH,
+{ color: C.ink, label: compact ? 'R_s' : ('R_s ' + P.fmtR(rs)), noSub: true });
+
+if (I > 0) {
+flow(ctx, Lx + ringW * 0.42, ringBot, 1);
+flow(ctx, Lx + ringW * 0.86, ringTop, -1);
+flow(ctx, Rx, ringTop + ringH * 0.72, 1);
+}
+
+function breakWire(x0, x1) { line(ctx, x0, ringTop, x1, ringTop, { color: C.bg, w: 6 }); }
+
+function voltAcross(xA, xB, noteText) {
+line(ctx, xA, ringTop, xA, vTop, { color: C.blue, w: 1.6, alpha: 0.7, dash: [7, 5] });
+line(ctx, xB, ringTop, xB, vTop, { color: C.blue, w: 1.6, alpha: 0.7, dash: [7, 5] });
+line(ctx, xA, vTop, xB, vTop, { color: C.blue, w: 1.6, alpha: 0.7, dash: [7, 5] });
+var cx = (xA + xB) / 2;
+meter(ctx, cx, vCy, mR, { color: C.blue, sym: 'V', label: small ? '' : '电压表', f: fV,
+side: 'right', note: small ? '' : (isIdeal ? 'R_V = ∞' : 'R_V = ' + P.fmtR(m.RV)) });
+if (noteText) {
+txt(ctx, noteText, cx - mR - 10, vCy, { size: 10.5, align: 'right', color: rgb(C.blue, 0.72) });
+}
+}
+
+if (mode === 'int') {
+var xr = Lx + ringW * 0.09;
+var xa = Lx + ringW * 0.62;
+breakWire(Lx, xr); breakWire(xr + rW, xa - mR); breakWire(xa + mR, Rx);
+resistor(ctx, xr, ringTop - rH / 2, rW, rH, { color: C.ink, label: 'Rₓ', sub: P.fmtR(rx), noSub: compact });
+meter(ctx, xa, ringTop, mR, { color: C.red, sym: 'A', label: '电流表', f: fA,
+side: 'right', note: isIdeal ? 'R_A = 0' : 'R_A = ' + P.fmtR(m.RA) });
+voltAcross(xr, xa + mR, small ? '' : '跨 Rₓ + A');
+if (!isIdeal && extraU > 0) {
+box(ctx, xa - mR - 5, ringTop - mR - 5, (mR + 5) * 2, (mR + 5) * 2,
+{ stroke: rgb(C.red, 0.65), w: 1.4, dash: [4, 4] });
+if (!compact) {
+txt(ctx, '↑ 这一段 I·R_A = ' + P.fmtU(extraU) + ' 被多读了', xa, ringTop + mR + 18,
+{ size: 10.5, align: 'center', color: C.red });
+}
+}
+} else if (mode === 'ext') {
+var xr2 = Lx + ringW * 0.30;
+breakWire(Lx, xr2); breakWire(xr2 + rW, Rx);
+resistor(ctx, xr2, ringTop - rH / 2, rW, rH, { color: C.ink, label: 'Rₓ', sub: P.fmtR(rx), noSub: compact });
+meter(ctx, Rx, ringTop + ringH * 0.62, mR, { color: C.red, sym: 'A', f: fA,
+label: compact ? '' : '电流表', side: 'left', note: compact ? '' : (isIdeal ? 'R_A = 0' : 'R_A = ' + P.fmtR(m.RA)) });
+voltAcross(xr2, xr2 + rW, small ? '' : '只跨 Rₓ');
+if (!isIdeal && extraI > 0) {
+arrow(ctx, Rx - 34, ringTop + ringH * 0.62 - mR - 14, Rx - 34, ringTop + ringH * 0.62 + mR + 14,
+{ color: C.blue, w: 1.8, head: 7 });
+if (!small) {
+txt(ctx, 'I_V = ' + P.fmtI(extraI), Rx - 46, ringTop + ringH * 0.62 + mR + 18,
+{ size: 10.5, align: 'right', color: C.blue });
+}
+}
+} else if (mode === 'volt') {
+var xr3 = Lx + ringW * 0.32;
+breakWire(Lx, xr3); breakWire(xr3 + rW, Rx);
+resistor(ctx, xr3, ringTop - rH / 2, rW, rH, { color: C.ink, label: 'Rₓ', sub: P.fmtR(rx), noSub: compact });
+voltAcross(xr3, xr3 + rW, '');
+if (!isIdeal) {
+arrow(ctx, xr3 + rW / 2 + 26, ringTop - 12, xr3 + rW / 2 + 26, vTop - 10,
+{ color: C.blue, w: 1.8, head: 7 });
+txt(ctx, '分走 I_V = ' + P.fmtI(vm.Iv), xr3 + rW / 2 + 36, (ringTop + vTop) / 2 + 12,
+{ size: 10.5, color: C.blue });
+if (!small) {
+txt(ctx, '电压表一接上就分走电流 → Rₓ 两端电压变低', xr3 + rW / 2, ringTop + rH / 2 + 26,
+{ size: 10.5, align: 'center', color: rgb(C.blue, 0.85) });
+}
+}
+} else {
+var xr4 = Lx + ringW * 0.28;
+breakWire(Lx, xr4); breakWire(xr4 + rW, Rx);
+resistor(ctx, xr4, ringTop - rH / 2, rW, rH, { color: C.ink, label: 'Rₓ', sub: P.fmtR(rx), noSub: compact });
+meter(ctx, Rx, ringTop + ringH * 0.62, mR, { color: C.red, sym: 'A', f: fA,
+label: compact ? '' : '电流表', side: 'left', note: compact ? '' : (isIdeal ? 'R_A = 0' : 'R_A = ' + P.fmtR(m.RA)) });
+if (!isIdeal) {
+box(ctx, Rx - mR - 6, ringTop + ringH * 0.62 - mR - 6, (mR + 6) * 2, (mR + 6) * 2,
+{ stroke: rgb(C.red, 0.55), w: 1.4, dash: [4, 4] });
+if (!small) {
+txt(ctx, '吃掉 I·R_A = ' + P.fmtU(am.Ua), Rx - mR - 14, ringTop + ringH * 0.62 + mR + 20,
+{ size: 10.5, align: 'center', color: C.red });
+txt(ctx, '回路总电阻 R_s + Rₓ + R_A → I 偏小', xr4 + rW / 2, ringTop + rH / 2 + 32,
+{ size: 10.5, align: 'center', color: rgb(C.red, 0.9) });
+}
+}
+}
+
+var noteMap = {
+int: '电压表跨在 Rₓ + 电流表 上 → 多读了 I·R_A',
+ext: '电流表在电压表外面 → 多读了 U/R_V',
+volt: '电压表并联分流 → 读数偏小',
+amp: '电流表串联分压 → 读数偏小'
+};
+if (!small && !compact && yNote > ringBot) {
+txt(ctx, noteMap[mode], Lx + ringW / 2, yNote, { size: 11, align: 'center', color: rgb(C.ink, 0.55) });
+}
+
+if (!isIdeal && !compact && mode !== 'volt' && mode !== 'amp') {
+var bx0 = R.x + pad + 8, bw0 = R.w - pad * 2 - 16, by0 = yDecomp;
+var frac, lab1, lab2, color2, head;
+if (mode === 'int') {
+frac = extraU / (U || 1); lab1 = 'Rₓ 两端 U(Rₓ)'; lab2 = '多读 I·R_A'; color2 = C.red;
+head = '电压表读到的 U ＝ Rₓ 两端的 ＋ 电流表吃掉的';
+} else {
+frac = extraI / (I || 1); lab1 = '流过 Rₓ 的 I(Rₓ)'; lab2 = '多读 I_V = U/R_V'; color2 = C.blue;
+head = '电流表读到的 I ＝ 流过 Rₓ 的 ＋ 流过电压表的';
+}
+txt(ctx, head, bx0, by0, { size: small ? 10 : 11, color: rgb(C.ink, 0.62) });
+box(ctx, bx0, by0 + 13, bw0, 16, { fill: rgb(C.ink, 0.13), stroke: rgb(C.ink, 0.28), w: 1 });
+var fw = Math.max(2, Math.min(bw0 - 2, bw0 * frac));
+box(ctx, bx0 + bw0 - fw, by0 + 13, fw, 16, { fill: rgb(color2, 0.5), stroke: color2, w: 1.2 });
+txt(ctx, lab1, bx0 + 6, by0 + 21, { size: 10, color: rgb(C.ink, 0.92) });
+var tailLab = lab2 + ' ' + P.fmtP(frac, 2);
+if (tw(ctx, tailLab, 10) < bw0 - 12) {
+txt(ctx, tailLab, bx0 + bw0 - 6, by0 + 21, { size: 10, align: 'right', weight: 700, color: C.bg });
+}
+if (!small && bw0 > 430) {
+txt(ctx, '这一段 Rₓ 并没有用到，却被算进了 R = U/I', bx0 + bw0, by0,
+{ size: 10.5, align: 'right', color: rgb(color2, 0.75) });
+}
+}
+
+var cellN = 0, cellPerRow = twoRow ? 2 : 4;
+var yR = yRead, x = R.x + pad + 8;
+var lastY = yRead;
+function cell(lab, val, color) {
+if (cellN >= cellPerRow) { yR += 19; x = R.x + pad + 8; cellN = 0; }
+cellN++;
+txt(ctx, lab, x, yR, { size: small ? 10.5 : 11.5, color: rgb(color, 0.75) });
+x += tw(ctx, lab, small ? 10.5 : 11.5) + 6;
+txt(ctx, val, x, yR, { size: small ? 13 : 15, weight: 700, color: color });
+x += tw(ctx, val, small ? 13 : 15, 700) + (small ? 12 : 20);
+lastY = Math.max(lastY, yR);
+}
+if (mode === 'volt') {
+cell('U真', P.fmtU(vm.trueU), C.ink);
+cell('U读', P.fmtU(vm.U), C.blue);
+cell('δ', P.fmtS(vm.err), C.red);
+} else if (mode === 'amp') {
+cell('I真', P.fmtI(am.trueI), C.ink);
+cell('I读', P.fmtI(am.I), C.red);
+cell('δ', P.fmtS(am.err), C.red);
+} else {
+cell('U读', P.fmtU(U), C.blue);
+cell('I读', P.fmtI(I), C.red);
+cell('R测 = U/I', P.fmtR(U / I), C.yellow);
+cell('Rₓ', P.fmtR(rx), rgb(C.ink, 0.85));
+}
+
+if (st.allow && st.allow.rx) {
+var sx0 = R.x + pad + 44, sx1 = R.x + R.w - pad - 12;
+var yS = Math.max(ySlider, lastY + 22);
+if (yS > R.y + R.h - 10) { yS = R.y + R.h - 10; }
+if (sx1 - sx0 > 90 && yS > lastY + 8) {
+line(ctx, sx0, yS, sx1, yS, { color: rgb(C.ink, 0.2), w: 3 });
+var px = sx0 + (sx1 - sx0) * P.tOfRx(rx);
+ctx.beginPath(); ctx.arc(px, yS, 6, 0, Math.PI * 2); ctx.fillStyle = C.yellow; ctx.fill();
+txt(ctx, 'Rₓ', sx0 - 10, yS, { size: 11, weight: 700, align: 'right', color: rgb(C.yellow, 0.8) });
+txt(ctx, '拖圆点', sx1, yS - 15, { size: 10, align: 'right', color: rgb(C.yellow, 0.5) });
+}
+}
+}
+
+function touchView(ctx, R, st) {
+var m = P.metersOf(st);
+var rs = P.rCrit(m);
+var tt = P.touchTest(st.rx, rs, m);
+var pad = 18;
+
+txt(ctx, '试触法 · 换接一次，比较两个表示数的变化率', R.x + pad, R.y + 16, { size: 13, weight: 600 });
+
+var narrowT = R.w < 560 || R.h < 360;
+var top = R.y + (narrowT ? 34 : 46), bot = R.y + R.h - 14;
+var colW = narrowT ? ((R.w - pad * 2 - 10) / 2) : Math.min(340, (R.w - pad * 2 - 18) / 2);
+var x0 = R.x + pad, x1 = x0 + colW + 10;
+var boxH = narrowT ? Math.max(54, Math.min(76, (bot - top) * 0.22)) : Math.min(160, (bot - top - 30) * 0.46);
+var yBox = top + (narrowT ? 22 : 30);
+
+function col(x, title, U, I, color, tag) {
+box(ctx, x, yBox, colW, boxH, { stroke: rgb(color, 0.55), w: 1.4 });
+txt(ctx, title, x + 10, yBox - 12, { size: 12, weight: 700, color: color });
+var lh = boxH / (narrowT ? 3 : 4);
+txt(ctx, 'U', x + 12, yBox + lh * 0.6, { size: narrowT ? 10 : 11.5, color: rgb(C.ink, 0.55) });
+txt(ctx, P.fmtU(U), x + colW - 12, yBox + lh * 0.6, { size: narrowT ? 13 : 16, weight: 700, align: 'right', color: C.blue });
+txt(ctx, 'I', x + 12, yBox + lh * 1.6, { size: narrowT ? 10 : 11.5, color: rgb(C.ink, 0.55) });
+txt(ctx, P.fmtI(I), x + colW - 12, yBox + lh * 1.6, { size: narrowT ? 13 : 16, weight: 700, align: 'right', color: C.red });
+if (!narrowT) { txt(ctx, tag, x + 14, yBox + lh * 3, { size: 10.5, color: rgb(C.ink, 0.45) }); }
+}
+col(x0, '① 接成内接', tt.Uint, tt.Iint, C.red, '电流表在电压表里面');
+col(x1, '② 接成外接', tt.Uext, tt.Iext, C.blue, '电流表在电压表外面');
+
+var by = yBox + boxH + (narrowT ? 30 : Math.max(48, (bot - (yBox + boxH)) * 0.30));
+var maxv = Math.max(tt.dU, tt.dI, 1e-9);
+var barMax = narrowT ? Math.max(60, R.w - pad * 2 - 20) : Math.max(80, R.w - pad * 2 - 190);
+function rateRow(y, lab, v, color) {
+if (narrowT) {
+txt(ctx, lab, R.x + pad, y - 12, { size: 10, color: rgb(color, 0.8) });
+var wpx2 = Math.max(2, (barMax - 52) * (v / maxv));
+box(ctx, R.x + pad, y + 4, barMax - 52, 12, { stroke: rgb(C.ink, 0.16), w: 1 });
+box(ctx, R.x + pad, y + 4, wpx2, 12, { fill: rgb(color, 0.38), stroke: color, w: 1 });
+txt(ctx, P.fmtP(v, 2), R.x + pad + barMax - 46, y + 10, { size: 10.5, weight: 700, color: color });
+return;
+}
+txt(ctx, lab, R.x + pad, y, { size: 11.5, color: rgb(color, 0.8) });
+var wpx = Math.max(2, barMax * (v / maxv));
+box(ctx, R.x + pad + 160, y - 9, barMax, 18, { stroke: rgb(C.ink, 0.16), w: 1 });
+box(ctx, R.x + pad + 160, y - 9, wpx, 18, { fill: rgb(color, 0.38), stroke: color, w: 1.2 });
+txt(ctx, P.fmtP(v, 2), R.x + pad + 166 + barMax, y, { size: 12.5, weight: 700, color: color });
+}
+if (by + 30 < bot) {
+var step0 = narrowT ? 40 : 30;
+rateRow(by, 'ΔU/U（电压表）', tt.dU, C.blue);
+rateRow(by + step0, 'ΔI/I（电流表）', tt.dI, C.red);
+var concl = tt.dU > tt.dI ? '电压表变化大 → 改外接' : '电流表变化大 → 改内接';
+var pe = P.pickByError(st.rx, m);
+var agree = (tt.pick === pe);
+var yc = by + step0 + (narrowT ? 34 : 42);
+if (yc < bot) {
+txt(ctx, '→ ' + concl, R.x + pad, yc, { size: narrowT ? 11.5 : 12.5, weight: 700, color: C.yellow });
+}
+if (!narrowT && yc + 22 < bot) {
+txt(ctx, '比值 ΔU/U ÷ ΔI/I = R_s/(Rₓ∥R_V) = ' + (tt.dU / (tt.dI || 1)).toFixed(2) +
+'（R_s 取 R₀ = ' + P.fmtR(rs) + '）',
+R.x + pad, yc + 22, { size: 10.5, color: rgb(C.ink, 0.45) });
+txt(ctx, '误差判据独立算一遍：' + (pe === 'int' ? '内接' : '外接') + ' 更准 —— ' +
+(agree ? '两判据一致' : '此处不一致（离临界太近）'),
+R.x + pad, yc + 42, { size: 11, color: agree ? rgb(C.green, 0.9) : rgb(C.gold, 0.95) });
+}
+}
+}
+
+function scale(ctx, R, st) {
+var m = P.metersOf(st), rx = st.rx;
+var W = R.w, H = R.h, pad = 16;
+var tiny = H < 170;
+var singleNow = (st.view === 'volt' || st.view === 'amp');
+txt(ctx, singleNow ? (st.view === 'volt' ? '电压表的读数偏差 δ' : '电流表的读数偏差 δ') : '两种接法的相对误差 δ',
+R.x + pad, R.y + pad + 6, { size: tiny ? 11 : 12, weight: 600, color: C.grey });
+if (!tiny) {
+txt(ctx, '对数刻度 0.01% → 100%', R.x + pad, R.y + pad + 23, { size: 11, color: rgb(C.ink, 0.42) });
+}
+
+var single = (st.view === 'volt' || st.view === 'amp');
+var vmS = single ? P.voltMeasure(rx, st.rs, m) : null;
+var amS = single ? P.ampMeasure(rx, st.rs, m) : null;
+var dI = single ? (st.view === 'volt' ? vmS.err : amS.err) : P.deltaInt(rx, m);
+var dE = single ? 0 : P.deltaExt(rx, m);
+var labW = 64;
+var barX = R.x + pad + labW, barW = Math.max(50, W - pad * 2 - labW - 8);
+var headH = tiny ? 44 : 58;
+var rowH = tiny ? Math.max(22, (H - headH - 16) / 2) : Math.min(44, Math.max(30, (H - 78) / 2));
+var y1 = R.y + headH + rowH * 0.35;
+var y2 = y1 + rowH;
+
+var ticks = [1e-4, 1e-3, 1e-2, 1e-1, 1];
+var labs = ['0.01%', '0.1%', '1%', '10%', '100%'];
+var k;
+for (k = 0; k < ticks.length; k++) {
+var tx = barX + barW * P.dPos(ticks[k]);
+line(ctx, tx, y1 - 11, tx, y2 + 11, { color: rgb(C.ink, 0.08), w: 1 });
+if (!tiny) { txt(ctx, labs[k], tx, y2 + 21, { size: 9.5, align: 'center', color: rgb(C.ink, 0.42) }); }
+}
+
+var singleLab = st.view === 'volt' ? '电压表' : '电流表';
+function bar(y, val, color, sign) {
+line(ctx, barX, y, barX + barW, y, { color: rgb(C.ink, 0.18), w: 1 });
+var wpx = Math.max(2, barW * P.dPos(Math.abs(val)));
+box(ctx, barX, y - 8, wpx, 16, { fill: rgb(color, 0.32), stroke: color, w: 1.4 });
+txt(ctx, sign + P.fmtP(Math.abs(val)), barX - 8, y, { size: 12, weight: 700, align: 'right', color: color });
+}
+if (single) {
+bar(y1, dI, st.view === 'volt' ? C.blue : C.red, dI >= 0 ? '+' : '−');
+txt(ctx, singleLab + '读数偏差', barX - labW + 2, y1 - 16, { size: 10.5, color: rgb(st.view === 'volt' ? C.blue : C.red, 0.75) });
+} else {
+bar(y1, dI, C.red, '+');
+bar(y2, dE, C.blue, '−');
+if (!tiny) {
+txt(ctx, '内接', barX - labW + 2, y1 - 16, { size: 10.5, color: rgb(C.red, 0.72) });
+txt(ctx, '外接', barX - labW + 2, y2 - 16, { size: 10.5, color: rgb(C.blue, 0.72) });
+}
+}
+
+if (!st.ideal) {
+var srcY = y2 + 40;
+if (!tiny && srcY < R.y + H - 42) {
+if (single) {
+if (st.view === 'volt') {
+txt(ctx, '来源：电压表内阻 R_V 分走电流 I_V = ' + P.fmtI(vmS.Iv), R.x + pad, srcY,
+{ size: 11, color: rgb(C.blue, 0.88) });
+txt(ctx, 'U读 = U真 · Rₓ∥R_V / (R_s + Rₓ∥R_V) < U真', R.x + pad, srcY + 17,
+{ size: 10.5, color: rgb(C.ink, 0.5) });
+} else {
+txt(ctx, '来源：电流表内阻 R_A 串进回路，吃掉 ' + P.fmtU(amS.Ua), R.x + pad, srcY,
+{ size: 11, color: rgb(C.red, 0.88) });
+txt(ctx, 'I读 = E/(R_s+Rₓ+R_A) < I真 = E/(R_s+Rₓ)', R.x + pad, srcY + 17,
+{ size: 10.5, color: rgb(C.ink, 0.5) });
+}
+} else {
+var ai = P.intRead(rx, st.rs, m), ae = P.extRead(rx, st.rs, m);
+txt(ctx, '内接多读 I·R_A = ' + P.fmtU(ai.Ua) + '（占 U 的 ' + P.fmtP(ai.Ua / (ai.U || 1), 1) + '）',
+R.x + pad, srcY, { size: 11, color: rgb(C.red, 0.85) });
+txt(ctx, '外接多读 I_V = ' + P.fmtI(ae.Iv) + '（占 I 的 ' + P.fmtP(ae.Iv / (ae.I || 1), 1) + '）',
+R.x + pad, srcY + 17, { size: 11, color: rgb(C.blue, 0.85) });
+}
+}
+}
+
+var yy = R.y + H - 16;
+if (tiny) { return; }
+if (st.ideal) {
+txt(ctx, '理想表：两条都 = 0，怎么接都对', R.x + pad, yy, { size: 12.5, weight: 700, color: C.green });
+} else if (single) {
+txt(ctx, '→ 单表误差 ' + P.fmtS(dI) + '（' + (dI < 0 ? '读数偏小' : '读数偏大') + '）', R.x + pad, yy,
+{ size: 12.5, weight: 700, color: C.gold });
+} else {
+var pick = P.pickByError(rx, m);
+var s1 = '→ 该用' + (pick === 'int' ? '内接' : '外接');
+txt(ctx, s1, R.x + pad, yy, { size: 13, weight: 700, color: C.yellow });
+txt(ctx, '（误差绝对值更小）', R.x + pad + tw(ctx, s1, 13, 700) + 6, yy, { size: 11, color: rgb(C.ink, 0.5) });
+}
+}
+
+function curve(ctx, R, st) {
+var m = P.metersOf(st);
+var singleNow = (st.view === 'volt' || st.view === 'amp');
+var W = R.w, H = R.h, pad = 16;
+var tight = H < 150;
+var gx0 = R.x + pad + (tight ? 34 : 40), gx1 = R.x + W - pad - 6;
+var gy0 = R.y + (tight ? 20 : pad + 28), gy1 = R.y + H - (tight ? 16 : pad + 28);
+if (gx1 - gx0 < 50 || gy1 - gy0 < 30) { return; }
+
+if (!tight) {
+txt(ctx, singleNow ? '参考：两种接法 δ 随 Rₓ（横轴对数）' : 'δ 随 Rₓ 变化（横轴对数）',
+R.x + pad, R.y + pad + 6, { size: 12, weight: 600, color: C.grey });
+}
+
+var marks = [1, 10, 100, 1000, 5000], i, xx;
+for (i = 0; i < marks.length; i++) {
+xx = gx0 + (gx1 - gx0) * P.tOfRx(marks[i]);
+line(ctx, xx, gy0, xx, gy1, { color: rgb(C.ink, 0.09), w: 1 });
+txt(ctx, marks[i] >= 1000 ? (marks[i] / 1000) + 'k' : marks[i] + '', xx, gy1 + 12,
+{ size: 9.5, align: 'center', color: rgb(C.ink, 0.42) });
+}
+var ys = [1e-4, 1e-2, 1];
+for (i = 0; i < ys.length; i++) {
+var yy = gy1 - (gy1 - gy0) * P.dPos(ys[i]);
+line(ctx, gx0, yy, gx1, yy, { color: rgb(C.ink, 0.09), w: 1 });
+txt(ctx, ys[i] < 1e-2 ? (ys[i] * 100).toFixed(2) + '%' : (ys[i] * 100).toFixed(0) + '%',
+gx0 - 6, yy, { size: 9.5, align: 'right', color: rgb(C.ink, 0.42) });
+}
+
+function drawCurve(fn, color) {
+ctx.beginPath();
+var j, t, r, py;
+for (j = 0; j <= 160; j++) {
+t = j / 160; r = P.rxOf(t);
+py = gy1 - (gy1 - gy0) * P.dPos(Math.abs(fn(r, m)));
+xx = gx0 + (gx1 - gx0) * t;
+if (j === 0) { ctx.moveTo(xx, py); } else { ctx.lineTo(xx, py); }
+}
+ctx.lineWidth = 2.4; ctx.strokeStyle = color; ctx.stroke();
+}
+drawCurve(P.deltaInt, C.red);
+drawCurve(P.deltaExtAbs, C.blue);
+
+if (!st.ideal) {
+var r0 = P.rCrit(m), d0 = P.deltaInt(r0, m);
+var cx = gx0 + (gx1 - gx0) * P.tOfRx(r0);
+var cy = gy1 - (gy1 - gy0) * P.dPos(d0);
+ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fillStyle = C.yellow; ctx.fill();
+line(ctx, cx, cy, cx, gy1, { color: rgb(C.yellow, 0.45), w: 1, dash: [4, 4] });
+txt(ctx, 'R₀ = ' + P.fmtR(r0), cx, cy - 12, { size: 10.5, align: 'center', color: C.yellow });
+}
+
+if (st.ideal) {
+txt(ctx, '理想表：δ ≡ 0，两条曲线都压在底线（0.01% 以下）', gx0 + (gx1 - gx0) / 2, (gy0 + gy1) / 2,
+{ size: 11, align: 'center', color: rgb(C.green, 0.9) });
+return;
+}
+var cxp = gx0 + (gx1 - gx0) * P.tOfRx(st.rx);
+line(ctx, cxp, gy0, cxp, gy1, { color: C.yellow, w: 1.6, alpha: 0.85, dash: [6, 5] });
+if (!tight) { txt(ctx, 'Rₓ', cxp, gy0 - 10, { size: 10.5, align: 'center', color: C.yellow }); }
+
+txt(ctx, '内接（偏大）', gx1, gy0 + 9, { size: 10, align: 'right', color: rgb(C.red, 0.85) });
+txt(ctx, '外接（偏小）', gx1, gy0 + 23, { size: 10, align: 'right', color: rgb(C.blue, 0.85) });
+}
+
+function draw(ctx, W, H, st) {
+texts = [];
+ctx.save();
+ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+ctx.textBaseline = 'middle';
+
+var L = layout(W, H);
+ctx.save();
+ctx.beginPath(); ctx.rect(L.hero.x, L.hero.y, L.hero.w, L.hero.h); ctx.clip();
+if (st.view === 'touch') { touchView(ctx, L.hero, st); } else { hero(ctx, L.hero, st); }
+ctx.restore();
+
+ctx.save();
+ctx.beginPath(); ctx.rect(L.scale.x, L.scale.y, L.scale.w, L.scale.h); ctx.clip();
+scale(ctx, L.scale, st);
+ctx.restore();
+
+if (L.curve && L.curve.h > 60) {
+ctx.save();
+ctx.beginPath(); ctx.rect(L.curve.x, L.curve.y, L.curve.w, L.curve.h); ctx.clip();
+curve(ctx, L.curve, st);
+ctx.restore();
+line(ctx, L.hero.w, 0, L.hero.w, H, { color: rgb(C.ink, 0.12), w: 1 });
+line(ctx, L.curve.x, L.curve.y, W, L.curve.y, { color: rgb(C.ink, 0.12), w: 1 });
+}
+
+ctx.restore();
+}
+
+function auditTexts(W, H) {
+var bad = [], i, t;
+for (i = 0; i < texts.length; i++) {
+t = texts[i];
+if (t.x0 < -1 || t.x1 > W + 1 || t.y - t.size / 2 < -1 || t.y + t.size / 2 > H + 1) {
+bad.push('「' + t.s + '」@(' + t.x0.toFixed(0) + ',' + t.y.toFixed(0) + ')');
+}
+}
+return bad;
+}
+function auditOverlap() {
+var bad = [], i, j, a, b;
+for (i = 0; i < texts.length; i++) {
+for (j = i + 1; j < texts.length; j++) {
+a = texts[i]; b = texts[j];
+var ox = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+var oy = Math.min(a.y + a.size * 0.5, b.y + b.size * 0.5) - Math.max(a.y - a.size * 0.5, b.y - b.size * 0.5);
+if (ox > 3 && oy > 3) { bad.push('「' + a.s + '」×「' + b.s + '」'); }
+}
+}
+return bad.slice(0, 8);
+}
+
+window.VizRender = { draw: draw, auditTexts: auditTexts, auditOverlap: auditOverlap, layout: layout, C: C };
+})();
+
+
+(function () {
+'use strict';
+var P = window.VizPhys;
+
+var BASE = {
+hk: 'h2', ideal: false, rx: 22, rs: P.RS_DEF,
+view: 'int', banner: '', allow: {}, dragKey: 'rx',
+formula: '', note: ''
+};
+
+function S(o) {
+var d = {}, k;
+for (k in BASE) { d[k] = BASE[k]; }
+for (k in o) { d[k] = o[k]; }
+return d;
+}
+
+var STEPS = [
+
+S({
+act: '第一幕 · 误差从哪来',
+title: '伏安法：R = U / I 的前提',
+view: 'int', ideal: true, rx: 22,
+banner: '理想表：R_A = 0、R_V = ∞ —— 此时 R = U / I 精确',
+hint: '这一步把两只表换成<b>理想表</b>：电流表当导线、电压表当断开。拖动 <b>Rₓ</b> 看读数，R测 永远等于真值。',
+allow: { rx: true, ideal: true },
+formula: 'R = U / I   （只在 R_A = 0、R_V = ∞ 时精确）',
+note: '伏安法的全部逻辑就这一行。先把"表不干扰电路"这个理想前提记住 —— 后面所有的误差，都是这个前提被打破的结果。'
+}),
+S({
+act: '第一幕 · 误差从哪来',
+title: '真表的两副面孔：R_A 与 R_V',
+view: 'int', ideal: false, rx: 22,
+banner: '电流表有内阻 → 分压；电压表有内阻 → 分流',
+hint: '关掉"理想表"，两只表立刻显出真身：电流表里多了个 <b>R_A</b>，电压表里多了个 <b>R_V</b>。拖动 <b>Rₓ</b>，看这两个内阻怎么动手脚。',
+allow: { rx: true, ideal: true, hk: true },
+formula: 'R_A = Rg·Ig / I量程        R_V = U量程 / Ig',
+note: '注意两件事：<b>R_A 很小但不为 0</b>，<b>R_V 很大但不是无穷</b>。误差不来自"看错了刻度"，而来自"表自己也在电路里"。'
+}),
+S({
+act: '第一幕 · 误差从哪来',
+title: '把表拆成"理想表 + 一个电阻"',
+view: 'int', ideal: false, rx: 22,
+banner: '电流表 = 理想电流表 串 R_A   电压表 = 理想电压表 并 R_V',
+hint: '任何一只真表都能拆成「理想表 + 一个内阻」。这一步开始，电流表就当 <b>R_A</b>、电压表就当 <b>R_V</b> 来看。拖 <b>Rₓ</b> 观察它们各自分到多少。',
+allow: { rx: true, hk: true },
+formula: 'U_A = I·R_A        I_V = U/R_V',
+note: '这一步是全课的枢纽：只要把表换成电阻，接法问题就变成了纯电路问题 —— 谁跟谁串、谁跟谁并，多读的到底是哪一段。'
+}),
+
+S({
+act: '第二幕 · 内接法',
+title: '内接：电流表在电压表里面',
+view: 'int', rx: 22,
+banner: '内接：电流表读数准，电压表多读了 I·R_A',
+hint: '看电压表的两个接线端：它跨的是 <b>Rₓ + 电流表</b>。拖动 <b>Rₓ</b>，注意 R测 永远比 Rₓ 大一点点。',
+allow: { rx: true, hk: true },
+formula: 'R测 = U / I = Rₓ + R_A        δ内 = +R_A / Rₓ',
+note: '电流表串在回路里，同一个 I 流过它和 Rₓ。它吃掉的 <b>I·R_A</b> 被电压表一起读走了 —— 这段电压 Rₓ 根本没用到。'
+}),
+S({
+act: '第二幕 · 内接法',
+title: '多读的那一段，正好是 I·R_A',
+view: 'int', rx: 5,
+banner: 'Rₓ 越小，R_A 占的比例越大 → 内接误差越大',
+hint: '把 <b>Rₓ</b> 往小拖：红框里那段 I·R_A 不变，可 Rₓ 越来越小，于是它占的比例越来越大 —— 误差 δ 跟着飙。',
+allow: { rx: true, hk: true },
+formula: 'δ内 = R_A / Rₓ        Rₓ ↓ → δ内 ↑',
+note: '这就是"内接法适合大电阻"的全部理由：不是习惯，是 <b>R_A/Rₓ</b> 这个比值在说话。'
+}),
+S({
+act: '第二幕 · 内接法',
+title: '内接法的误差曲线：δ ∝ 1/Rₓ',
+view: 'int', rx: 22,
+banner: '内接法永远偏大；Rₓ 越大越准',
+hint: '右侧曲线里红线就是内接。拖 <b>Rₓ</b> 让黄色游标在曲线上滑动：往右走，红线一路往下掉。',
+allow: { rx: true, hk: true },
+formula: 'δ内 = +R_A / Rₓ   （恒为正 → 恒偏大）',
+note: '红线是<b>单调下降</b>的：Rₓ 每增大 10 倍，误差就降到 1/10。所以内接法的舒适区在右边（大电阻）。'
+}),
+
+S({
+act: '第三幕 · 外接法',
+title: '外接：电流表在电压表外面',
+view: 'ext', rx: 22,
+banner: '外接：电压表读数准，电流表多读了 U/R_V',
+hint: '现在电压表只跨 <b>Rₓ</b>，电压读得准；但电流表装在它外面。拖 <b>Rₓ</b> 看 R测 永远比真值小。',
+allow: { rx: true, hk: true },
+formula: 'R测 = U / I = Rₓ ∥ R_V        δ外 = −Rₓ / (Rₓ + R_V)',
+note: '电压表不是断开：它自己要吃 <b>U/R_V</b> 的电流。电流表读的是"流过 Rₓ 的 + 流过电压表的"，于是把 Rₓ 的电流读大了 → R测 偏小。'
+}),
+S({
+act: '第三幕 · 外接法',
+title: '多读的那一路，是 U/R_V',
+view: 'ext', rx: 300,
+banner: 'Rₓ 越大，电压表分走的比例越大 → 外接误差越大',
+hint: '把 <b>Rₓ</b> 往大拖：电压表分走的 I_V 占比越来越大，外接的误差跟着飙。',
+allow: { rx: true, hk: true },
+formula: 'δ外 = −Rₓ / (Rₓ + R_V)      Rₓ ↑ → |δ外| ↑',
+note: '外接法"适合小电阻"也是同一个道理：Rₓ 小的时候，R_V 显得特别大，分走的那一路可以忽略。'
+}),
+S({
+act: '第三幕 · 外接法',
+title: '外接法的误差曲线：δ ∝ Rₓ',
+view: 'ext', rx: 22,
+banner: '外接法永远偏小；Rₓ 越小越准',
+hint: '蓝线是外接。拖 <b>Rₓ</b> 往右走，蓝线一路上升 —— 和外接法的"舒适区在左边"正好对上。',
+allow: { rx: true, hk: true },
+formula: 'δ外 = −Rₓ / (Rₓ + R_V)   （恒为负 → 恒偏小）',
+note: '两条线一升一降，必然相交。下一次把两条画在同一张图上。'
+}),
+
+S({
+act: '第四幕 · 怎么选',
+title: '两条曲线相交：临界电阻 R₀',
+view: 'int', rx: 22,
+banner: '交点 R₀ = √(R_A·R_V)：两侧各用一种接法',
+hint: '黄点是临界点 <b>R₀</b>。拖 <b>Rₓ</b> 越过它，看"该用内接/外接"的结论怎么翻面。',
+allow: { rx: true, hk: true },
+formula: 'R₀ ≈ √(R_A·R_V)      |δ内| = |δ外| 的位置',
+note: '交点左边蓝线更低（外接准），右边红线更低（内接准）。<b>口诀：大内小外</b>。'
+}),
+S({
+act: '第四幕 · 怎么选',
+title: '大内小外：一句话的选择规则',
+view: 'int', rx: 22,
+banner: 'Rₓ ≫ R₀ → 内接   ·   Rₓ ≪ R₀ → 外接',
+hint: '拖 <b>Rₓ</b> 扫一遍整个量程，看黄色结论条什么时候翻面。再点底栏 <b>换表头</b>，看 R₀ 跟着怎么移动。',
+allow: { rx: true, hk: true },
+formula: 'Rₓ > R₀ → 内接（大内）      Rₓ < R₀ → 外接（小外）',
+note: '换更好的表（R_A 更小、R_V 更大）→ R₀ 右移 → 更多电阻可以用外接。所以 R₀ 不是常数，它由<b>你手上这套表</b>决定。'
+}),
+S({
+act: '第四幕 · 怎么选',
+title: '临界附近：两种都不好',
+view: 'int', rx: 12,
+banner: 'Rₓ ≈ R₀ 时两种接法误差都大 → 换方法，不是换接法',
+hint: '把 <b>Rₓ</b> 拖到黄点附近：两条曲线贴在一起，都下不去。这时候改接法没用。',
+allow: { rx: true, hk: true },
+formula: 'Rₓ ≈ R₀  →  δ内 ≈ |δ外| ≈ √(R_A/R_V)',
+note: '临界附近是伏安法的"盲区"。出路是换<b>方法</b>（半偏法、电桥）或换<b>表</b>（更小的 R_A、更大的 R_V），而不是在两种接法之间来回换。'
+}),
+
+S({
+act: '第五幕 · 试触法',
+title: '不知道 Rₓ 多大：两种各试一次',
+view: 'touch', rx: 22,
+banner: '换接一次，比较两个表示数的变化率',
+hint: '左边是接成内接的读数，右边是换成外接的读数。拖 <b>Rₓ</b> 看两个表示数各自变化多少。',
+allow: { rx: true, hk: true },
+formula: 'ΔU/U ÷ ΔI/I = R_s / (Rₓ ∥ R_V)',
+note: '这是<b>严格恒等式</b>：变化率之比 = 串联电阻 / 并联电阻。所以"哪个表示数变化大"不是经验，是算得出来的。'
+}),
+S({
+act: '第五幕 · 试触法',
+title: '试触法的判据',
+view: 'touch', rx: 60,
+banner: '电压表变化大 → 改外接；电流表变化大 → 改内接',
+hint: '拖 <b>Rₓ</b> 跨过临界点，看两条"变化率"横条哪根更长，结论跟着翻面。',
+allow: { rx: true, hk: true },
+formula: 'ΔU/U > ΔI/I → 外接      ΔU/U < ΔI/I → 内接',
+note: '物理含义：电压表变化大，说明"电流表分压"这件事碍事 → Rₓ 小 → 改外接。反之亦然。'
+}),
+
+S({
+act: '第六幕 · 拆开看',
+title: '只测电压：电压表一接上就把电路拉低了',
+view: 'volt', rx: 100, rs: 100,
+banner: '电压表读数 ≤ 真值；R_V 越大越接近真值',
+hint: '拖 <b>Rₓ</b>，比较"不接表时的真值"和"接了表之后的读数"。注意读数永远小一点。',
+allow: { rx: true, hk: true },
+formula: 'U读 = E·(Rₓ∥R_V) / (R_s + Rₓ∥R_V)  <  U真 = E·Rₓ/(R_s+Rₓ)',
+note: '这一步把"电压表内阻"单独拎出来看：它并联上去就分走电流，把被测那段拉低。<b>R_V 越大，拉得越轻</b>。'
+}),
+S({
+act: '第六幕 · 拆开看',
+title: '只测电流：电流表一串进去就把电流压小了',
+view: 'amp', rx: 5, rs: 0,
+banner: '电流表读数 ≤ 真值；R_A 越小越接近真值',
+hint: '拖 <b>Rₓ</b>，比较真值和读数。电流表的内阻串在回路里，读数总是小一点。',
+allow: { rx: true, hk: true },
+formula: 'I读 = E / (R_s + Rₓ + R_A)  <  I真 = E / (R_s + Rₓ)',
+note: '电流表内阻串进来 → 回路总电阻变大 → 电流变小。<b>R_A 越小，压得越轻</b>。'
+}),
+S({
+act: '第六幕 · 拆开看',
+title: '三句话带走',
+view: 'int', rx: 22,
+banner: '误差不来自读数，而来自表自己在电路里',
+hint: '这一步不拖也行：把前面每一步的结论在这里对齐。想复核就拖 <b>Rₓ</b> 扫一遍。',
+allow: { rx: true, hk: true },
+formula: '内接：多读 I·R_A → 偏大      外接：多读 U/R_V → 偏小',
+note: '① 内接偏大，多的是 R_A；② 外接偏小，少的是 Rₓ∥R_V；③ 分界 R₀ = √(R_A R_V)，大内小外。'
+})
+];
+
+function baseState() {
+var st = S({});
+st.step = 0;
+st.hk = 'h2';
+st.rx = 22;
+st.rs = P.RS_DEF;
+st.ideal = false;
+st.rng = { rx: [P.RX_MIN, P.RX_MAX, 1], rs: [P.RS_MIN, P.RS_MAX, 1] };
+return st;
+}
+
+function apply(st, i) {
+var d = STEPS[i];
+if (!d) { return; }
+var k;
+for (k in d) { st[k] = d[k]; }
+st.step = i;
+}
+
+window.VizSteps = { STEPS: STEPS, baseState: baseState, apply: apply };
+})();
+
+
+(function () {
+'use strict';
+var P = window.VizPhys, R = window.VizRender, S = window.VizSteps;
+
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d', { willReadFrequently: true });
+var st = S.baseState();
+var W = 0, H = 0, drag = null;
+
+function fitCanvas() {
+var wrap = cv.parentElement;
+void wrap.offsetHeight;
+var w = Math.max(320, Math.floor(wrap.clientWidth - 16));
+var h = Math.max(240, Math.floor(wrap.clientHeight - 6));
+if (w === W && h === H) { return false; }
+W = w; H = h;
+var dpr = Math.min(2, window.devicePixelRatio || 1);
+cv.width = Math.floor(w * dpr);
+cv.height = Math.floor(h * dpr);
+cv.style.width = w + 'px';
+cv.style.height = h + 'px';
+ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+return true;
+}
+
+function setTxt(id, v, cls) {
+var el = document.getElementById(id);
+if (!el) { return; }
+el.textContent = v;
+el.className = cls || '';
+}
+function rows(arr) {
+var s = '', i;
+for (i = 0; i < arr.length; i++) {
+s += '<div class="rd"><span>' + arr[i][0] + '</span><b class="' + (arr[i][2] || '') + '">' + arr[i][1] + '</b></div>';
+}
+return s;
+}
+
+function updatePanel() {
+var m = P.metersOf(st), rx = st.rx, a1 = [], a2 = [], t = '', verdict = '', vcls = 'ok';
+var modeLab = { int: '内接法', ext: '外接法', volt: '只测电压', amp: '只测电流', touch: '试触法' }[st.view] || '内接法';
+setTxt('modeTag', st.ideal ? '理想表' : (modeLab + ' · ' + P.head(st.hk).lab), 'tag');
+
+var ai = P.intRead(rx, st.rs, m), ae = P.extRead(rx, st.rs, m);
+var dI = P.deltaInt(rx, m), dE = P.deltaExt(rx, m);
+var r0 = P.rCrit(m), pick = P.pickByError(rx, m);
+
+if (st.view === 'touch') {
+var tt0 = P.touchTest(rx, P.rCrit(m), m);
+a1 = [
+['内接时电压表读数', P.fmtU(tt0.Uint), 'blue'],
+['外接时电压表读数', P.fmtU(tt0.Uext), 'blue'],
+['电压表示数变化 ΔU/U', P.fmtP(tt0.dU, 2), 'gold'],
+['内接时电流表读数', P.fmtI(tt0.Iint), 'red'],
+['外接时电流表读数', P.fmtI(tt0.Iext), 'red'],
+['电流表示数变化 ΔI/I', P.fmtP(tt0.dI, 2), 'gold']
+];
+} else if (st.view === 'int') {
+a1 = [
+['电压表读数 U', P.fmtU(ai.U), 'blue'],
+['电流表读数 I', P.fmtI(ai.I), 'red'],
+['R测 = U / I', P.fmtR(ai.R), 'yellow'],
+['真值 Rₓ', P.fmtR(rx), ''],
+['多读的一段 I·R_A', P.fmtU(ai.Ua), 'red'],
+['δ内 = R_A/Rₓ', P.fmtS(dI), 'bad']
+];
+} else if (st.view === 'ext') {
+a1 = [
+['电压表读数 U', P.fmtU(ae.U), 'blue'],
+['电流表读数 I', P.fmtI(ae.I), 'red'],
+['R测 = U / I', P.fmtR(ae.R), 'yellow'],
+['真值 Rₓ', P.fmtR(rx), ''],
+['多读的一路 I_V = U/R_V', P.fmtI(ae.Iv), 'blue'],
+['δ外 = −Rₓ/(Rₓ+R_V)', P.fmtS(dE), 'bad']
+];
+} else if (st.view === 'volt') {
+var vm = P.voltMeasure(rx, st.rs, m);
+a1 = [
+['不接表时的真值 U', P.fmtU(vm.trueU), ''],
+['接了表之后的读数', P.fmtU(vm.U), 'blue'],
+['差值', P.fmtU(vm.trueU - vm.U), 'red'],
+['相对误差', P.fmtS(vm.err), 'bad'],
+['电压表分走的电流', P.fmtI(vm.Iv), 'blue'],
+['真值 Rₓ', P.fmtR(rx), '']
+];
+} else if (st.view === 'amp') {
+var am = P.ampMeasure(rx, st.rs, m);
+a1 = [
+['不接表时的真值 I', P.fmtI(am.trueI), ''],
+['接了表之后的读数', P.fmtI(am.I), 'red'],
+['差值', P.fmtI(am.trueI - am.I), 'red'],
+['相对误差', P.fmtS(am.err), 'bad'],
+['电流表吃掉的电压', P.fmtU(am.Ua), 'red'],
+['真值 Rₓ', P.fmtR(rx), '']
+];
+}
+
+a2 = [
+['电流表内阻 R_A', st.ideal ? '0（理想）' : P.fmtR(m.RA), 'red'],
+['电压表内阻 R_V', st.ideal ? '∞（理想）' : P.fmtR(m.RV), 'blue'],
+['临界电阻 R₀ = √(R_A·R_V)', st.ideal ? '—' : P.fmtR(r0), 'yellow'],
+['Rₓ / R₀', st.ideal ? '—' : (rx / r0).toFixed(2) + ' 倍', 'gold']
+];
+
+if (st.ideal) {
+verdict = '理想表：两种接法都精确，误差为 0';
+vcls = 'ok';
+} else if (st.view === 'int') {
+verdict = '内接恒偏大：R测 = Rₓ + R_A（+' + P.fmtP(dI) + '）';
+vcls = 'warn';
+} else if (st.view === 'ext') {
+verdict = '外接恒偏小：R测 = Rₓ∥R_V（−' + P.fmtP(Math.abs(dE)) + '）';
+vcls = 'warn';
+} else if (st.view === 'volt') {
+verdict = '电压表读数总偏小 —— 它自己分走了电流';
+vcls = 'warn';
+} else if (st.view === 'amp') {
+verdict = '电流表读数总偏小 —— 它的内阻串进了回路';
+vcls = 'warn';
+}
+
+var nearCrit = !st.ideal && Math.abs(Math.log(rx / r0)) < 0.35;
+
+if (st.step >= 9 && st.step <= 11 && !st.ideal) {
+verdict = nearCrit ? 'Rₓ ≈ R₀：两种都差，换方法而不是换接法'
+: ('该用' + (pick === 'int' ? '内接' : '外接') + '（误差更小：' +
+P.fmtP(Math.min(Math.abs(dI), Math.abs(dE))) + '）');
+vcls = nearCrit ? 'bad' : 'ok';
+}
+if (st.step === 11) {
+var near2 = Math.abs(Math.log(rx / r0)) < 0.35;
+verdict = near2 ? '此刻正卡在临界：两种接法误差都在 ' + P.fmtP(Math.min(Math.abs(dI), Math.abs(dE))) + ' 左右'
+: 'Rₓ / R₀ = ' + (rx / r0).toFixed(2) + '，已经离开临界区 —— 把 Rₓ 拖回黄点附近再看';
+vcls = near2 ? 'bad' : 'warn';
+}
+
+if (st.step === 12 || st.step === 13) {
+var tt = P.touchTest(rx, P.rCrit(m), m);
+verdict = tt.dU > tt.dI ? '电压表示数变化大 → 改外接' : '电流表示数变化大 → 改内接';
+vcls = 'warn';
+}
+
+if (st.step === 16) {
+verdict = '内接多读 I·R_A（偏大）· 外接多读 U/R_V（偏小）· 大内小外';
+vcls = 'ok';
+}
+document.getElementById('rdGroup1').innerHTML = rows(a1);
+document.getElementById('rdGroup2').innerHTML = rows(a2);
+setTxt('rdVerdict', verdict, vcls);
+
+var ek = st.view === 'volt' ? 'volt' : (st.view === 'amp' ? 'amp' : (st.view === 'ext' ? 'ext' : 'int'));
+if (st.ideal) { ek = 'ideal'; }
+if (st.step === 0) { ek = 'ask'; }
+if (st.step === 2) { ek = 'pair'; }
+if (st.step === 3) { ek = 'int'; }
+if (st.step === 4) { ek = 'int2'; }
+if (st.step === 5) { ek = 'int3'; }
+if (st.step === 6) { ek = 'ext'; }
+if (st.step === 7) { ek = 'ext2'; }
+if (st.step === 8) { ek = 'ext3'; }
+if (st.step === 9) { ek = 'curve'; }
+if (st.step === 10) { ek = 'choice'; }
+if (st.step === 11) { ek = 'near'; }
+if (st.step === 12 || st.step === 13) { ek = 'touch'; }
+if (st.step === 16) { ek = 'final'; }
+document.getElementById('rdGroup3').innerHTML = '<div class="note">' + P.explain(ek) + '</div>';
+document.getElementById('rdFormula').textContent = st.formula;
+document.getElementById('rdNote').innerHTML = st.note;
+}
+
+function headBtnsHTML() {
+var s = '', i;
+for (i = 0; i < P.HEADS.length; i++) {
+s += '<button data-hk="' + P.HEADS[i].key + '">' + P.HEADS[i].lab + '</button>';
+}
+return s;
+}
+var BUILT = false;
+function buildControls() {
+if (!BUILT) {
+document.getElementById('headBtns').innerHTML = headBtnsHTML();
+document.getElementById('idealBtns').innerHTML =
+'<button data-ideal="0">真表</button><button data-ideal="1">理想表</button>';
+BUILT = true;
+}
+var a = st.allow || {};
+var map = { wrap_rx: !!a.rx, wrap_rs: !!a.rs, wrap_head: !!a.hk, wrap_ideal: !!a.ideal };
+for (var k in map) {
+var el = document.getElementById(k);
+if (el) { el.classList.toggle('hidden', !map[k]); }
+}
+document.getElementById('rgRx').value = P.tOfRx(st.rx);
+document.getElementById('rgRs').value = st.rs;
+setTxt('lbRx', P.fmtR(st.rx), '');
+setTxt('lbRs', st.rs.toFixed(0) + ' Ω', '');
+
+var bs = document.querySelectorAll('#headBtns button'), i;
+for (i = 0; i < bs.length; i++) { bs[i].classList.toggle('on', bs[i].dataset.hk === st.hk && !st.ideal); }
+bs = document.querySelectorAll('#idealBtns button');
+for (i = 0; i < bs.length; i++) {
+bs[i].classList.toggle('on', (bs[i].dataset.ideal === '1') === !!st.ideal);
+}
+}
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+function buildToc() {
+var nav = document.getElementById('toc'), html = '', lastAct = '', i, d;
+for (i = 0; i < S.STEPS.length; i++) {
+d = S.STEPS[i];
+if (d.act !== lastAct) {
+if (lastAct) { html += '<span class="sep"></span>'; }
+html += '<span class="grouplab">' + esc(d.act.split(' · ')[0]) + '</span>';
+lastAct = d.act;
+}
+html += '<a data-go="' + i + '" title="' + esc(d.title) + '">' + (i + 1) + '</a>';
+}
+nav.innerHTML = html;
+nav.addEventListener('click', function (e) {
+var a2 = e.target.closest ? e.target.closest('a[data-go]') : null;
+if (a2) { goto(parseInt(a2.dataset.go, 10)); }
+});
+}
+function markToc() {
+var as = document.querySelectorAll('#toc a'), i;
+for (i = 0; i < as.length; i++) {
+as[i].classList.toggle('on', parseInt(as[i].dataset.go, 10) === st.step);
+}
+}
+
+/* ===================== 绘制 ===================== */
+var settlePending = false;
+function scheduleSettle() {
+if (settlePending || !window.requestAnimationFrame) { return; }
+settlePending = true;
+window.requestAnimationFrame(function () {
+fitCanvas(); R.draw(ctx, W, H, st);
+window.requestAnimationFrame(function () {
+settlePending = false;
+fitCanvas(); R.draw(ctx, W, H, st);
+});
+});
+}
+function draw() {
+updatePanel();
+markToc();
+buildControls();
+void document.body.offsetHeight;
+fitCanvas();
+R.draw(ctx, W, H, st);
+document.getElementById('actTag').textContent = st.act;
+document.getElementById('stepTitle').textContent = st.title;
+document.getElementById('stepSn').textContent = (st.step + 1) + ' / ' + S.STEPS.length;
+document.getElementById('hint').innerHTML = st.hint;
+document.getElementById('prog').firstElementChild.style.width = ((st.step + 1) / S.STEPS.length * 100) + '%';
+cv.style.cursor = (st.allow && st.allow.rx) ? 'grab' : 'default';
+for (var gu = 0; gu < 3; gu++) { if (!fitCanvas()) { break; } R.draw(ctx, W, H, st); }
+scheduleSettle();
+}
+
+/* ===================== 步骤机 ===================== */
+function goto(i) { S.apply(st, i); draw(); }
+function next() { if (st.step < S.STEPS.length - 1) { goto(st.step + 1); } }
+function prev() { if (st.step > 0) { goto(st.step - 1); } }
+function reset() { goto(st.step); }
+
+function setRx(rx) { st.rx = P.clamp(rx, P.RX_MIN, P.RX_MAX); draw(); }
+function setRs(rs) { st.rs = P.clamp(rs, P.RS_MIN, P.RS_MAX); draw(); }
+function setHead(k) { st.hk = k; st.ideal = false; draw(); }
+function setIdeal(v) { st.ideal = !!v; draw(); }
+
+/* ===================== 交互 ===================== */
+function canvasXY(e) {
+var r = cv.getBoundingClientRect();
+return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+/* 画布上 Rₓ 的滑轨：主电路区底部的一条横条 */
+function dragMap() {
+var L = R.layout(W, H), h = L.hero;
+var x0 = h.x + 40, x1 = h.x + h.w - 40;
+var y = h.y + h.h - 58;
+return { x0: x0, x1: x1, y: y, key: 'rx' };
+}
+
+function bind() {
+document.getElementById('btnPrev').onclick = prev;
+document.getElementById('btnNext').onclick = next;
+document.getElementById('btnReset').onclick = reset;
+document.getElementById('rgRx').addEventListener('input', function () {
+setRx(P.rxOf(parseFloat(this.value)));
+});
+document.getElementById('rgRs').addEventListener('input', function () {
+setRs(parseFloat(this.value));
+});
+document.getElementById('headBtns').addEventListener('click', function (e) {
+var b = e.target.closest ? e.target.closest('button[data-hk]') : null;
+if (b) { setHead(b.dataset.hk); }
+});
+document.getElementById('idealBtns').addEventListener('click', function (e) {
+var b = e.target.closest ? e.target.closest('button[data-ideal]') : null;
+if (b) { setIdeal(b.dataset.ideal === '1'); }
+});
+
+cv.addEventListener('pointerdown', function (e) {
+if (!(st.allow && st.allow.rx)) { return; }
+var p = canvasXY(e), m = dragMap();
+if (p.y < m.y - 26 || p.y > m.y + 26) { return; }
+drag = m;
+try { cv.setPointerCapture(e.pointerId); } catch (err) { }
+cv.style.cursor = 'grabbing';
+setRx(P.rxOf((p.x - m.x0) / Math.max(1, m.x1 - m.x0)));
+});
+cv.addEventListener('pointermove', function (e) {
+if (!drag) { return; }
+var p = canvasXY(e);
+setRx(P.rxOf((p.x - drag.x0) / Math.max(1, drag.x1 - drag.x0)));
+});
+function endDrag(e) {
+drag = null;
+cv.style.cursor = (st.allow && st.allow.rx) ? 'grab' : 'default';
+try { cv.releasePointerCapture(e.pointerId); } catch (err) { }
+}
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', function () { drag = null; });
+
+document.addEventListener('keydown', function (e) {
+if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) { return; }
+if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); next(); }
+else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+else if (e.key === 'Home') { goto(0); }
+else if (e.key === 'End') { goto(S.STEPS.length - 1); }
+else if (e.key >= '1' && e.key <= '3' && st.allow && st.allow.hk) { setHead(P.HEADS[parseInt(e.key, 10) - 1].key); }
+});
+
+window.addEventListener('resize', function () { fitCanvas(); R.draw(ctx, W, H, st); });
+}
+
+/* ===================== 自检钩子 ===================== */
+function hash() {
+if (!W || !H) { return 'empty'; }
+var d = ctx.getImageData(0, 0, cv.width, cv.height).data;
+var h = 2166136261 >>> 0, i, step = 97;
+for (i = 0; i < d.length; i += step * 4) {
+h ^= d[i]; h = Math.imul(h, 16777619) >>> 0;
+h ^= d[i + 1]; h = Math.imul(h, 16777619) >>> 0;
+h ^= d[i + 2]; h = Math.imul(h, 16777619) >>> 0;
+}
+return (h >>> 0).toString(16);
+}
+
+function checkAllowConsistency() {
+var bad = [], i, d, t, a;
+for (i = 0; i < S.STEPS.length; i++) {
+d = S.STEPS[i]; t = d.hint || ''; a = d.allow || {};
+if (/拖/.test(t) && !a.rx) { bad.push('step' + (i + 1) + ': hint 提到拖动，allow.rx 缺失'); }
+if (/表头/.test(t) && !a.hk) { bad.push('step' + (i + 1) + ': hint 提到表头，allow.hk 缺失'); }
+/* 只有"让你去切理想表"才算交互承诺；叙述里出现这个词不算 */
+if (/(切到|换成|打开|关掉)理想表/.test(t) && !a.ideal) { bad.push('step' + (i + 1) + ': hint 要求切理想表，allow.ideal 缺失'); }
+if (/串联/.test(t) && !a.rs) { bad.push('step' + (i + 1) + ': hint 提到串联，allow.rs 缺失'); }
+if (!d.dragKey) { bad.push('step' + (i + 1) + ': dragKey 缺失'); }
+}
+return { ok: bad.length === 0, bad: bad };
+}
+
+function auditAll(view) {
+var w = (view && view.w) || 1280, h = (view && view.h) || 720;
+var W0 = W, H0 = H, cur = st.step, bad = [], i, k;
+W = w; H = h;
+for (i = 0; i < S.STEPS.length; i++) {
+S.apply(st, i);
+for (k = 0; k < 3; k++) { R.draw(ctx, w, h, st); }
+var bb = R.auditTexts(w, h);
+for (k = 0; k < bb.length; k++) { bad.push('step' + (i + 1) + ': ' + bb[k]); }
+if (R.auditOverlap) {
+var ov = R.auditOverlap(w, h);
+for (k = 0; k < ov.length && k < 3; k++) { bad.push('重叠 step' + (i + 1) + ': ' + ov[k]); }
+}
+}
+W = W0; H = H0;
+goto(cur);
+return { w: w, h: h, bad: bad };
+}
+
+window.__viz = {
+selfTest: function () {
+var p = P.runSelfTest(), c = checkAllowConsistency();
+var fails = p.fails.slice();
+if (!c.ok) { fails = fails.concat(c.bad); }
+return { pass: p.nfail + (c.ok ? 0 : c.bad.length) === 0, cases: p.cases, nfail: p.nfail + (c.ok ? 0 : c.bad.length), fails: fails.slice(0, 12) };
+},
+hash: hash, goto: goto, next: next, prev: prev,
+state: function () { return st; },
+steps: S.STEPS.length,
+checkAllow: checkAllowConsistency,
+auditAll: auditAll,
+setRx: setRx, setRs: setRs, setHead: setHead, setIdeal: setIdeal,
+stepTitles: function () { return S.STEPS.map(function (d) { return d.act + ' | ' + d.title; }); },
+diag: function () { return { W: W, H: H, cw: cv.width, ch: cv.height, view: st.view, step: st.step, hk: st.hk }; }
+};
+
+/* ===================== 启动 ===================== */
+buildToc();
+bind();
+goto(0);
+window.addEventListener('load', function () { fitCanvas(); R.draw(ctx, W, H, st); });
+if (window.requestAnimationFrame) {
+window.requestAnimationFrame(function () { fitCanvas(); R.draw(ctx, W, H, st); });
+}
+if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
+document.fonts.ready.then(function () { fitCanvas(); R.draw(ctx, W, H, st); });
+}
+})();
+</script>
+</body>
+</html>
