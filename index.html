@@ -597,6 +597,11 @@ function flowArrowV(ctx, x, y, dir) {
 arrow(ctx, x, y - 13 * dir, x, y + 13 * dir, { color: rgb(C.ink, 0.7), w: 2.2, head: 9 });
 }
 
+function sliderGeom(W, H) {
+var L = layout(W, H), R = L.hero, pad = 18;
+return { x0: R.x + pad + 44, x1: R.x + R.w - pad - 12, y: R.y + R.h - 14 };
+}
+
 function hero(ctx, R, st) {
 var m = P.metersOf(st), rx = st.rx, rs = st.rs, mode = st.view;
 var pad = 18, isIdeal = st.ideal;
@@ -612,22 +617,23 @@ else { I = am.I; U = I * rx; }
 var fA = P.clamp01(I / P.A_RANGE), fV = P.clamp01(U / P.V_RANGE);
 
 var small = R.w < 560, compact = R.h < 430;
+var micro = R.h < 250;
 var twoRow = small || R.h < 430;
 
 var yTitle = R.y + 15, yBanner = R.y + 42;
 var ySlider = R.y + R.h - 14;
-var yRead = ySlider - (twoRow ? 40 : 22);
+var yRead = micro ? (R.y + R.h - 6) : (ySlider - (twoRow ? 62 : 22));
 var yDecomp = yRead - (small ? 42 : 48);
 var yNote = yDecomp - 16;
 var bannerBottom = st.banner ? (yBanner + (small ? 13 : 15) * 0.9 + 8) : (R.y + 44);
-var bandTop = Math.max(R.y + 40, bannerBottom);
-var bandBot = compact ? (yRead - 46) : (yDecomp - 26);
+var bandTop = micro ? (st.banner ? bannerBottom : (R.y + 30)) : Math.max(R.y + 40, bannerBottom);
+var bandBot = micro ? (R.y + R.h - 10) : (compact ? (yRead - 46) : (yDecomp - 26));
 
-var mR = small ? 15 : 22;
+var mR = micro ? 11 : (small ? 15 : 22);
 var vGap = mR * 2 + (compact ? 22 : 46);
 var ringW = Math.min(R.w - pad * 2 - 96, 860);
 var ringH = Math.min(bandBot - bandTop - vGap, compact ? 96 : 240);
-if (ringH < 70) { ringH = 70; }
+if (ringH < (micro ? 34 : 70)) { ringH = (micro ? 34 : 70); }
 var totalH = vGap + ringH;
 var top0 = bandTop + Math.max(0, (bandBot - bandTop - totalH) * 0.5);
 
@@ -690,7 +696,7 @@ line(ctx, Rx, ringTop, Rx, ringBot, W_);
 var cxR = topC[0];
 resistorSym(ctx, cxR, ringTop, rW, rH);
 symLabel(ctx, 'Rₓ', cxR, ringTop, small ? 11 : 12.5, C.ink);
-if (!compact) {
+if (!compact && R.h > 380) {
 txt(ctx, P.fmtR(rx), cxR, ringTop + rH / 2 + 14, { size: 10.5, align: 'center', color: rgb(C.ink, 0.65) });
 }
 
@@ -759,15 +765,20 @@ txt(ctx, 'I', midT, ringTop - 28, { size: 10, align: 'center', color: rgb(C.ink,
 }
 
 if (!isIdeal && mode === 'int' && extraU > 0 && !compact) {
-box(ctx, cxA - mR - 4, ringTop - mR - 4, (mR + 4) * 2, (mR + 4) * 2,
-{ stroke: rgb(C.red, 0.55), w: 1.2, dash: [4, 4] });
-txt(ctx, '↑ 多读 I·R_A = ' + P.fmtU(extraU), cxA, ringTop + mR + 32,
+
+box(ctx, cxA - mR - 1, ringTop - 4, 6, 8, { fill: rgb(C.red, 0.5) });
+box(ctx, cxA + mR - 5, ringTop - 4, 6, 8, { fill: rgb(C.red, 0.5) });
+txt(ctx, '↑ 这一段把 U 读大了 ' + P.fmtU(extraU), cxA, ringTop + mR + 30,
 { size: 10, align: 'center', color: C.red });
-line(ctx, cxA + mR * 0.55, ringTop + mR * 0.55, cxA + mR + 12, ringTop + mR + 24,
-{ color: rgb(C.red, 0.5), w: 1 });
 }
 if (!isIdeal && mode === 'ext' && extraI > 0 && !compact) {
-txt(ctx, '含 I_V = ' + P.fmtI(extraI), Rx - mR - 10, yA + 16, { size: 10, align: 'right', color: C.blue });
+
+var vy0 = vCy + mR + 3, vy1 = ringTop - 3;
+box(ctx, tapA - 3, vy0, 6, vy1 - vy0, { fill: rgb(C.blue, 0.45) });
+box(ctx, tapB - 3, vy0, 6, vy1 - vy0, { fill: rgb(C.blue, 0.45) });
+txt(ctx, '电压表分流 I_V = ' + P.fmtI(extraI), tapA - 12, (vy0 + vy1) / 2,
+{ size: 10, align: 'right', color: C.blue });
+txt(ctx, '含 I_V = ' + P.fmtI(extraI), Rx - mR - 10, yA + 16, { size: 9.5, align: 'right', color: rgb(C.blue, 0.7) });
 }
 if (!isIdeal && mode === 'amp' && !compact) {
 txt(ctx, '吃掉 I·R_A = ' + P.fmtU(am.Ua), Rx - mR - 10, yA + 16, { size: 10, align: 'right', color: C.red });
@@ -787,71 +798,80 @@ if (!compact && noteMap[mode] && yNote > ringBot + 26) {
 txt(ctx, noteMap[mode], Lx + ringW / 2, yNote, { size: 10.5, align: 'center', color: rgb(C.ink, 0.55) });
 }
 
-if (!compact && !small && !isIdeal) {
-var panelW = Math.min(Rx - Lx - 84, 460), panelH = 124;
-var px0 = Lx + 42, px1 = px0 + panelW;
-var py0 = ringTop + 64, py1 = py0 + panelH;
-if (ringBot - py1 > 34 && panelW > 300) {
-
-box(ctx, px0 - 12, py0 - 14, (px1 - px0) + 24, (py1 - py0) + 22,
+if (!compact && !small) {
+var panW = Math.min(Rx - Lx - 84, 470);
+var panH = 150;
+var px0 = Lx + 42, py0 = ringTop + 82, px1 = px0 + panW, py1 = py0 + panH;
+if (ringBot - py1 > 22 && panW > 300) {
+box(ctx, px0 - 12, py0 - 14, panW + 24, panH + 24,
 { fill: 'rgba(255,255,255,0.022)', stroke: rgb(C.ink, 0.1), w: 1 });
-txt(ctx, mode === 'amp' ? '放大看：电流表 = 理想表 + R_A，串在回路里'
-: (mode === 'int' ? '放大看：电流表 = 理想表 + R_A（与 Rₓ 串联）'
-: '放大看：电压表 = 理想表 ∥ R_V（与 Rₓ 并联）'),
-px0, py0 - 2, { size: 9.5, color: rgb(C.ink, 0.55) });
 
-var lw2 = { color: rgb(C.ink, 0.55), w: 1.5 };
-var ax0 = px0 + 26, ax1 = px1 - 26;
-var ayT = py0 + 30, ayB = py0 + 86;
+var half = (panW - 26) / 2;
+var axA = px0, axB = px0 + half, axC = px0 + half + 26;
+var ayT = py0 + 26, ayB = py0 + 96;
 
-if (mode === 'int' || mode === 'amp') {
+function subPanel(x0, x1, title, isIdealSide) {
+txt(ctx, title, x0, py0 - 1, { size: 9.5, color: rgb(isIdealSide ? C.green : C.ink, 0.72) });
+var lwc = { color: rgb(C.ink, isIdealSide ? 0.35 : 0.6), w: 1.5, alpha: isIdealSide ? 0.6 : 1 };
+line(ctx, x0, ayT, x1, ayT, lwc);
+line(ctx, x0, ayB, x1, ayB, lwc);
+line(ctx, x0, ayT, x0, ayB, lwc);
+line(ctx, x1, ayT, x1, ayB, lwc);
+return { x0: x0, x1: x1 };
+}
 
-var bw3 = Math.min(88, (ax1 - ax0) * 0.26), bh3 = 20;
-var pr4 = placeRow(ax0, ax1, [bw3, bw3 * 0.72]);
-line(ctx, ax0, ayT, ax1, ayT, lw2);
-line(ctx, ax0, ayB, ax1, ayB, lw2);
-line(ctx, ax0, ayT, ax0, ayB, lw2);
-line(ctx, ax1, ayT, ax1, ayB, lw2);
+var Lp = subPanel(axA, axB, mode === 'ext' ? '实际：电流表读到 I(Rₓ)+I_V' : '实际：电压表读到 U(Rₓ)+I·R_A', false);
+var midL = (Lp.x0 + Lp.x1) / 2;
+var bwP = Math.min(84, (Lp.x1 - Lp.x0) * 0.34), bhP = 18;
+if (mode === 'ext') {
 
-line(ctx, pr4.cx[0] - bw3 / 2, ayT, pr4.cx[0] + bw3 / 2, ayT, { color: C.bg, w: 4 });
-line(ctx, pr4.cx[1] - bw3 * 0.36, ayT, pr4.cx[1] + bw3 * 0.36, ayT, { color: C.bg, w: 4 });
-resistorSym(ctx, pr4.cx[0], ayT, bw3, bh3);
-symLabel(ctx, 'Rₓ', pr4.cx[0], ayT, 9.5, C.ink);
-resistorSym(ctx, pr4.cx[1], ayT, bw3 * 0.72, bh3, { color: C.red });
-symLabel(ctx, 'R_A', pr4.cx[1], ayT, 9, C.red);
+line(ctx, midL - bwP / 2, ayT, midL + bwP / 2, ayT, { color: C.bg, w: 4 });
+line(ctx, midL - bwP / 2, ayB, midL + bwP / 2, ayB, { color: C.bg, w: 4 });
+resistorSym(ctx, midL, ayT, bwP, bhP);
+symLabel(ctx, 'Rₓ', midL, ayT, 9, C.ink);
+resistorSym(ctx, midL, ayB, bwP, bhP, { color: C.blue });
+symLabel(ctx, 'R_V', midL, ayB, 9, C.blue);
 
-var tA2 = pr4.cx[0] - bw3 / 2, tB2 = pr4.cx[1] + bw3 * 0.36;
-line(ctx, tA2, ayT, tA2, ayB, { color: rgb(C.blue, 0.45), w: 1, dash: [4, 4] });
-line(ctx, tB2, ayT, tB2, ayB, { color: rgb(C.blue, 0.45), w: 1, dash: [4, 4] });
-txt(ctx, 'U读 = U(Rₓ) + I·R_A', ax0, py1 - 8, { size: 9, color: rgb(C.ink, 0.62) });
-txt(ctx, 'R_A 这一段是白读的', ax1, py1 - 8,
-{ size: 9, align: 'right', color: rgb(C.red, 0.85) });
+arrow(ctx, midL + bwP / 2 + 8, ayT + 10, midL + bwP / 2 + 8, ayB - 10,
+{ color: rgb(C.blue, 0.85), w: 1.8, head: 7 });
+txt(ctx, '分流 I_V', midL + bwP / 2 + 14, (ayT + ayB) / 2, { size: 8.5, color: C.blue });
 } else {
 
-var bw4 = Math.min(96, (ax1 - ax0) * 0.3), bh4 = 20;
-var mid = (ax0 + ax1) / 2;
+var prx = placeRow(Lp.x0 + 8, Lp.x1 - 8, [bwP, bwP * 0.68]);
+line(ctx, prx.cx[0] - bwP / 2, ayT, prx.cx[0] + bwP / 2, ayT, { color: C.bg, w: 4 });
+line(ctx, prx.cx[1] - bwP * 0.34, ayT, prx.cx[1] + bwP * 0.34, ayT, { color: C.bg, w: 4 });
+resistorSym(ctx, prx.cx[0], ayT, bwP, bhP);
+symLabel(ctx, 'Rₓ', prx.cx[0], ayT, 9, C.ink);
+resistorSym(ctx, prx.cx[1], ayT, bwP * 0.68, bhP, { color: C.red });
+symLabel(ctx, 'R_A', prx.cx[1], ayT, 8.5, C.red);
 
-var byA = ayT, byB = ayB;
-var lxA = mid - bw4 / 2 - 46, lxB = mid + bw4 / 2 + 46;
-line(ctx, ax0, ayT, ax1, ayT, lw2);
-line(ctx, ax0, ayB, ax1, ayB, lw2);
-line(ctx, ax0, ayT, ax0, ayB, lw2);
-line(ctx, ax1, ayT, ax1, ayB, lw2);
-line(ctx, mid - bw4 / 2, ayT, mid + bw4 / 2, ayT, { color: C.bg, w: 4 });
-line(ctx, mid - bw4 / 2, ayB, mid + bw4 / 2, ayB, { color: C.bg, w: 4 });
+var bx = prx.cx[1] - bwP * 0.34 - 3;
+box(ctx, bx, ayT - bhP / 2 - 3, bwP * 0.68 + 6, bhP + 6,
+{ stroke: rgb(C.red, 0.55), w: 1.1, dash: [3, 3] });
+arrow(ctx, prx.cx[1], ayT - bhP / 2 - 10, prx.cx[1], ayT - bhP / 2 - 2,
+{ color: rgb(C.red, 0.85), w: 1.6, head: 6 });
+txt(ctx, '分压 I·R_A', prx.cx[1], ayB + 12, { size: 8.5, align: 'center', color: C.red });
+}
 
-resistorSym(ctx, mid, byA, bw4, bh4);
-symLabel(ctx, 'Rₓ', mid, byA, 9.5, C.ink);
-resistorSym(ctx, mid, byB, bw4, bh4, { color: C.blue });
-symLabel(ctx, 'R_V', mid, byB, 9.5, C.blue);
-txt(ctx, 'I读 = I(Rₓ) + I_V', ax0, py1 - 8, { size: 9, color: rgb(C.ink, 0.62) });
-txt(ctx, 'R_V 这一支是白读的', ax1, py1 - 8,
-{ size: 9, align: 'right', color: rgb(C.blue, 0.85) });
+var Rp = subPanel(axC, axC + half, mode === 'ext' ? '理想：I读 = I(Rₓ)' : '理想：U读 = U(Rₓ)', true);
+var midR = (Rp.x0 + Rp.x1) / 2;
+line(ctx, midR - bwP / 2, ayT, midR + bwP / 2, ayT, { color: C.bg, w: 4 });
+resistorSym(ctx, midR, ayT, bwP, bhP, { color: rgb(C.ink, 0.55) });
+symLabel(ctx, 'Rₓ', midR, ayT, 9, rgb(C.ink, 0.7));
+if (mode === 'ext') {
+
+line(ctx, midR - bwP / 2, ayB, midR - 14, ayB, { color: rgb(C.ink, 0.3), w: 1.2, dash: [4, 4] });
+line(ctx, midR + 14, ayB, midR + bwP / 2, ayB, { color: rgb(C.ink, 0.3), w: 1.2, dash: [4, 4] });
+txt(ctx, 'R_V = ∞（断开）', midR, ayB + 12, { size: 8.5, align: 'center', color: rgb(C.green, 0.85) });
+} else {
+
+line(ctx, midR - bwP / 2, ayB, midR + bwP / 2, ayB, { color: rgb(C.green, 0.5), w: 1.4 });
+txt(ctx, 'R_A = 0（导线）', midR, ayB + 12, { size: 8.5, align: 'center', color: rgb(C.green, 0.85) });
 }
 }
 }
 
-if (!isIdeal && !compact && mode !== 'volt' && mode !== 'amp') {
+if (!isIdeal && !compact && !micro && mode !== 'volt' && mode !== 'amp') {
 var bx0 = R.x + pad + 6, by0 = yDecomp;
 var realV, extraV, extraLab, color2, unitLab;
 if (mode === 'int') {
@@ -879,7 +899,7 @@ txt(ctx, '占 ' + P.fmtP(extraV / (realV + extraV), 2), R.x + R.w - pad - 6, by0
 var cellN = 0, cellPerRow = twoRow ? 2 : 4;
 var yR = yRead, x = R.x + pad + 6, lastY = yRead;
 function cell(lab, val, color) {
-if (cellN >= cellPerRow) { yR += 19; x = R.x + pad + 6; cellN = 0; }
+if (cellN >= cellPerRow) { yR += (small ? 22 : 24); x = R.x + pad + 6; cellN = 0; }
 cellN++;
 txt(ctx, lab, x, yR, { size: small ? 10 : 11.5, color: rgb(color, 0.72) });
 x += tw(ctx, lab, small ? 10 : 11.5) + 6;
@@ -887,24 +907,31 @@ txt(ctx, val, x, yR, { size: small ? 12.5 : 15, weight: 700, color: color });
 x += tw(ctx, val, small ? 12.5 : 15, 700) + (small ? 12 : 20);
 lastY = Math.max(lastY, yR);
 }
-if (mode === 'volt') {
+if (micro) {  }
+else if (mode === 'volt') {
 cell('U真', P.fmtU(vm.trueU), C.ink); cell('U读', P.fmtU(vm.U), C.blue); cell('δ', P.fmtS(vm.err), C.red);
 } else if (mode === 'amp') {
 cell('I真', P.fmtI(am.trueI), C.ink); cell('I读', P.fmtI(am.I), C.red); cell('δ', P.fmtS(am.err), C.red);
 } else {
 cell('U读', P.fmtU(U), C.blue); cell('I读', P.fmtI(I), C.red);
-cell('R测', P.fmtR(U / I), C.yellow); cell('Rₓ', P.fmtR(rx), rgb(C.ink, 0.85));
+cell('R测', P.fmtR(U / I), C.yellow);
+if (R.h > 200) { cell('Rₓ', P.fmtR(rx), rgb(C.ink, 0.85)); }
 }
 
-if (st.allow && st.allow.rx) {
-var sx0 = R.x + pad + 40, sx1 = R.x + R.w - pad - 12;
-var yS = Math.max(ySlider, lastY + 20);
-if (yS > R.y + R.h - 10) { yS = R.y + R.h - 10; }
-if (sx1 - sx0 > 80 && yS > lastY + 6) {
+if (!micro && st.allow && st.allow.rx) {
+var sg = sliderGeom(R.w + R.x * 0, R.h);
+var sx0 = R.x + pad + (R.h > 420 ? 44 : 8), sx1 = R.x + R.w - pad - 12;
+var yS = (R.h < 340) ? (yRead - 24) : (R.y + R.h - 14);
+if (sx1 - sx0 > 80) {
 line(ctx, sx0, yS, sx1, yS, { color: rgb(C.ink, 0.2), w: 3 });
 var px = sx0 + (sx1 - sx0) * P.tOfRx(rx);
 ctx.beginPath(); ctx.arc(px, yS, 6, 0, Math.PI * 2); ctx.fillStyle = C.yellow; ctx.fill();
+if (R.h < 340) {
+txt(ctx, 'Rₓ 可拖', sx1, yS - 14, { size: 9.5, align: 'right', color: rgb(C.yellow, 0.5) });
+}
+if (R.h > 420) {
 txt(ctx, 'Rₓ', sx0 - 8, yS, { size: 11, weight: 700, align: 'right', color: rgb(C.yellow, 0.8) });
+}
 }
 }
 }
@@ -995,18 +1022,19 @@ var dI = single ? (st.view === 'volt' ? vmS.err : amS.err) : P.deltaInt(rx, m);
 var dE = single ? 0 : P.deltaExt(rx, m);
 var labW = 64;
 var barX = R.x + pad + labW, barW = Math.max(50, W - pad * 2 - labW - 8);
-var headH = tiny ? 44 : 58;
-var rowH = tiny ? Math.max(22, (H - headH - 16) / 2) : Math.min(44, Math.max(30, (H - 78) / 2));
+var headH = tiny ? 30 : 58;
+var rowH = tiny ? Math.max(20, (H - headH - 14) / 2) : Math.min(44, Math.max(30, (H - 78) / 2));
 var y1 = R.y + headH + rowH * 0.35;
 var y2 = y1 + rowH;
 
 var ticks = [1e-4, 1e-3, 1e-2, 1e-1, 1];
 var labs = ['0.01%', '0.1%', '1%', '10%', '100%'];
 var k;
+var noTick = H < 150;
 for (k = 0; k < ticks.length; k++) {
 var tx = barX + barW * P.dPos(ticks[k]);
 line(ctx, tx, y1 - 11, tx, y2 + 11, { color: rgb(C.ink, 0.08), w: 1 });
-if (!tiny) { txt(ctx, labs[k], tx, y2 + 21, { size: 9.5, align: 'center', color: rgb(C.ink, 0.42) }); }
+if (!tiny && !noTick) { txt(ctx, labs[k], tx, y2 + 21, { size: 9.5, align: 'center', color: rgb(C.ink, 0.42) }); }
 }
 
 var singleLab = st.view === 'volt' ? '电压表' : '电流表';
@@ -1018,7 +1046,10 @@ txt(ctx, sign + P.fmtP(Math.abs(val)), barX - 8, y, { size: 12, weight: 700, ali
 }
 if (single) {
 bar(y1, dI, st.view === 'volt' ? C.blue : C.red, dI >= 0 ? '+' : '−');
-txt(ctx, singleLab + '读数偏差', barX - labW + 2, y1 - 16, { size: 10.5, color: rgb(st.view === 'volt' ? C.blue : C.red, 0.75) });
+if (!tiny) {
+txt(ctx, singleLab + '读数偏差', barX - labW + 2, y1 - 16,
+{ size: 10.5, color: rgb(st.view === 'volt' ? C.blue : C.red, 0.75) });
+}
 } else {
 bar(y1, dI, C.red, '+');
 bar(y2, dE, C.blue, '−');
@@ -1117,7 +1148,7 @@ var cx = gx0 + (gx1 - gx0) * P.tOfRx(r0);
 var cy = gy1 - (gy1 - gy0) * P.dPos(d0);
 ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fillStyle = C.yellow; ctx.fill();
 line(ctx, cx, cy, cx, gy1, { color: rgb(C.yellow, 0.45), w: 1, dash: [4, 4] });
-txt(ctx, 'R₀ = ' + P.fmtR(r0), cx, cy - 12, { size: 10.5, align: 'center', color: C.yellow });
+if (H > 130) { txt(ctx, 'R₀ = ' + P.fmtR(r0), cx, cy - 12, { size: 10.5, align: 'center', color: C.yellow }); }
 }
 
 if (st.ideal) {
@@ -1129,8 +1160,10 @@ var cxp = gx0 + (gx1 - gx0) * P.tOfRx(st.rx);
 line(ctx, cxp, gy0, cxp, gy1, { color: C.yellow, w: 1.6, alpha: 0.85, dash: [6, 5] });
 if (!tight) { txt(ctx, 'Rₓ', cxp, gy0 - 10, { size: 10.5, align: 'center', color: C.yellow }); }
 
+if (H > 130) {
 txt(ctx, '内接（偏大）', gx0 + 6, gy0 + 10, { size: 10, color: rgb(C.red, 0.9) });
 txt(ctx, '外接（偏小）', gx0 + 6, gy0 + 24, { size: 10, color: rgb(C.blue, 0.9) });
+}
 }
 
 function draw(ctx, W, H, st) {
@@ -1185,7 +1218,10 @@ if (ox > 3 && oy > 3) { bad.push('「' + a.s + '」×「' + b.s + '」'); }
 return bad.slice(0, 8);
 }
 
-window.VizRender = { draw: draw, auditTexts: auditTexts, auditOverlap: auditOverlap, layout: layout, C: C };
+window.VizRender = {
+draw: draw, auditTexts: auditTexts, auditOverlap: auditOverlap,
+layout: layout, sliderGeom: sliderGeom, C: C
+};
 })();
 
 
@@ -1685,11 +1721,10 @@ var r = cv.getBoundingClientRect();
 return { x: e.clientX - r.left, y: e.clientY - r.top };
 }
 /* 画布上 Rₓ 的滑轨：主电路区底部的一条横条 */
+/* 命中区与绘制共用 R.sliderGeom（此前两者差 44px，导致"拖不动"） */
 function dragMap() {
-var L = R.layout(W, H), h = L.hero;
-var x0 = h.x + 40, x1 = h.x + h.w - 40;
-var y = h.y + h.h - 58;
-return { x0: x0, x1: x1, y: y, key: 'rx' };
+var g = R.sliderGeom(W, H);
+return { x0: g.x0, x1: g.x1, y: g.y, key: 'rx' };
 }
 
 function bind() {
@@ -1715,6 +1750,7 @@ cv.addEventListener('pointerdown', function (e) {
 if (!(st.allow && st.allow.rx)) { return; }
 var p = canvasXY(e), m = dragMap();
 if (p.y < m.y - 26 || p.y > m.y + 26) { return; }
+if (p.x < m.x0 - 40 || p.x > m.x1 + 40) { return; }
 drag = m;
 try { cv.setPointerCapture(e.pointerId); } catch (err) { }
 cv.style.cursor = 'grabbing';
