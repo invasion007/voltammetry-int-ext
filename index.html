@@ -623,7 +623,7 @@ var yNote = compact ? yRead - 28 : yDecomp - 16;
 var bandTop = R.y + (compact ? 52 : 66);
 var bandBot = yNote - (compact ? 14 : 22);
 var vBand = mR * 2 + (compact ? 12 : 30);
-var ringH = Math.min(bandBot - bandTop - vBand, 320);
+var ringH = Math.min(bandBot - bandTop - vBand, 220);
 var ringMin = compact ? 34 : 84;
 if (ringH < ringMin) { ringH = ringMin; }
 var totalH = ringH + vBand;
@@ -760,13 +760,11 @@ box(ctx, bx0, by0 + 13, bw0, 16, { fill: rgb(C.ink, 0.13), stroke: rgb(C.ink, 0.
 var fw = Math.max(2, Math.min(bw0 - 2, bw0 * frac));
 box(ctx, bx0 + bw0 - fw, by0 + 13, fw, 16, { fill: rgb(color2, 0.5), stroke: color2, w: 1.2 });
 txt(ctx, lab1, bx0 + 6, by0 + 21, { size: 10, color: rgb(C.ink, 0.92) });
-var tailLab = lab2 + ' ' + P.fmtP(frac, 2);
-if (tw(ctx, tailLab, 10) < bw0 - 12) {
-txt(ctx, tailLab, bx0 + bw0 - 6, by0 + 21, { size: 10, align: 'right', weight: 700, color: C.bg });
-}
+var tailLab = lab2 + ' = ' + P.fmtP(frac, 2);
+txt(ctx, tailLab, bx0 + bw0, by0, { size: 10.5, align: 'right', color: color2 });
 if (!small && bw0 > 430) {
-txt(ctx, '这一段 Rₓ 并没有用到，却被算进了 R = U/I', bx0 + bw0, by0,
-{ size: 10.5, align: 'right', color: rgb(color2, 0.75) });
+txt(ctx, '这一段 Rₓ 并没有用到，却算进了 R = U/I', bx0 + bw0, by0 + 18,
+{ size: 10.5, align: 'right', color: rgb(color2, 0.7) });
 }
 }
 
@@ -1023,16 +1021,16 @@ txt(ctx, 'R₀ = ' + P.fmtR(r0), cx, cy - 12, { size: 10.5, align: 'center', col
 }
 
 if (st.ideal) {
-txt(ctx, '理想表：δ ≡ 0，两条曲线都压在底线（0.01% 以下）', gx0 + (gx1 - gx0) / 2, (gy0 + gy1) / 2,
-{ size: 11, align: 'center', color: rgb(C.green, 0.9) });
+txt(ctx, '理想表：δ ≡ 0（两条曲线压在底线）', gx0 + (gx1 - gx0) / 2, (gy0 + gy1) / 2,
+{ size: tight ? 10 : 11, align: 'center', color: rgb(C.green, 0.9) });
 return;
 }
 var cxp = gx0 + (gx1 - gx0) * P.tOfRx(st.rx);
 line(ctx, cxp, gy0, cxp, gy1, { color: C.yellow, w: 1.6, alpha: 0.85, dash: [6, 5] });
 if (!tight) { txt(ctx, 'Rₓ', cxp, gy0 - 10, { size: 10.5, align: 'center', color: C.yellow }); }
 
-txt(ctx, '内接（偏大）', gx1, gy0 + 9, { size: 10, align: 'right', color: rgb(C.red, 0.85) });
-txt(ctx, '外接（偏小）', gx1, gy0 + 23, { size: 10, align: 'right', color: rgb(C.blue, 0.85) });
+txt(ctx, '内接（偏大）', gx0 + 6, gy0 + 10, { size: 10, color: rgb(C.red, 0.9) });
+txt(ctx, '外接（偏小）', gx0 + 6, gy0 + 24, { size: 10, color: rgb(C.blue, 0.9) });
 }
 
 function draw(ctx, W, H, st) {
