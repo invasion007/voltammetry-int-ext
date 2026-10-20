@@ -495,12 +495,12 @@ var narrow = W < 700;
 if (narrow) {
 return {
 narrow: true,
-hero: { x: 0, y: 0, w: W, h: Math.round(H * 0.56) },
-scale: { x: 0, y: Math.round(H * 0.56), w: W, h: Math.round(H * 0.20) },
-curve: { x: 0, y: Math.round(H * 0.76), w: W, h: H - Math.round(H * 0.76) }
+hero: { x: 0, y: 0, w: W, h: Math.round(H * 0.70) },
+scale: { x: 0, y: Math.round(H * 0.70), w: W, h: Math.round(H * 0.14) },
+curve: { x: 0, y: Math.round(H * 0.84), w: W, h: H - Math.round(H * 0.84) }
 };
 }
-var heroW = Math.round(Math.min(W * 0.60, W - 286));
+var heroW = Math.round(Math.min(W * 0.66, W - 292));
 return {
 narrow: false,
 hero: { x: 0, y: 0, w: heroW, h: H },
@@ -597,9 +597,18 @@ function flowArrowV(ctx, x, y, dir) {
 arrow(ctx, x, y - 13 * dir, x, y + 13 * dir, { color: rgb(C.ink, 0.7), w: 2.2, head: 9 });
 }
 
-function sliderGeom(W, H) {
-var L = layout(W, H), R = L.hero, pad = 18;
-return { x0: R.x + pad + 44, x1: R.x + R.w - pad - 12, y: R.y + R.h - 14 };
+function sliderGeom(W, H, heroRect) {
+var R = heroRect || layout(W, H).hero, pad = 18;
+var small = R.w < 560, micro = R.h < 250;
+var readH = micro ? 0 : (R.w >= 700 ? 132 : (R.h < 320 ? 62 : 84));
+var readBot = R.y + R.h - (micro ? 6 : (R.w < 560 ? 30 : 32));
+var readTop = readBot - readH;
+var y = small ? (R.y + R.h - 14) : (R.h < 340 ? (readTop - 18) : (readBot + 18));
+return {
+x0: R.x + pad + (R.h > 420 ? 44 : 8),
+x1: R.x + R.w - pad - 12,
+y: y
+};
 }
 
 function hero(ctx, R, st) {
@@ -624,7 +633,7 @@ var yTitle = R.y + 15, yBanner = R.y + 42;
 var ySlider = R.y + R.h - 14;
 
 var readBot = R.y + R.h - (micro ? 6 : 32);
-var readH = micro ? 0 : (R.w >= 700 ? 132 : 96);
+var readH = micro ? 0 : (R.w >= 700 ? 132 : (R.h < 320 ? 62 : 84));
 var readTop = readBot - readH;
 var yRead = readTop;
 var yDecomp = readTop;
@@ -633,25 +642,27 @@ var bannerBottom = st.banner ? (yBanner + (small ? 13 : 15) * 0.9 + 8) : (R.y + 
 var bandTop = micro ? (st.banner ? bannerBottom : (R.y + 30)) : Math.max(R.y + 40, bannerBottom);
 var bandBot = micro ? (R.y + R.h - 10) : (readTop - 26);
 
-var mR = micro ? 11 : (small ? 15 : 22);
-var vGap = mR * 2 + (compact ? 22 : 46);
-var ringW = Math.min(R.w - pad * 2 - 96, 860);
-var ringH = Math.min(bandBot - bandTop - vGap, compact ? 96 : 240);
+var mR = micro ? 12 : (small ? 17 : 27);
+var vGap = mR * 2 + (compact ? 24 : 50);
+var ringW = Math.min(R.w - pad * 2 - 56, 980);
+var ringAvail = bandBot - bandTop - vGap;
+var ringCap = small ? Math.max(80, Math.round(ringAvail * 0.9)) : 400;
+var ringH = Math.min(ringAvail, ringCap);
 if (ringH < (micro ? 34 : 70)) { ringH = (micro ? 34 : 70); }
 var totalH = vGap + ringH;
 var top0 = bandTop + Math.max(0, (bandBot - bandTop - totalH) * 0.5);
 
 var slack = (bandBot - bandTop) - totalH;
-if (slack > 8) { ringH += Math.min(slack, 40); totalH = vGap + ringH; top0 = bandTop + Math.max(0, (bandBot - bandTop - totalH) * 0.5); }
+if (slack > 8) { ringH += Math.min(slack, 90); totalH = vGap + ringH; top0 = bandTop + Math.max(0, (bandBot - bandTop - totalH) * 0.5); }
 var vCy = top0 + mR;
 var ringTop = top0 + vGap;
 var ringBot = ringTop + ringH;
 var Lx = R.x + Math.round((R.w - ringW) / 2);
 var Rx = Lx + ringW;
 
-var rW = Math.max(58, Math.min(130, ringW * 0.26));
-var rH = small ? 24 : 34;
-var rWs = small ? 72 : 152;
+var rW = Math.max(64, Math.min(168, ringW * 0.28));
+var rH = micro ? 26 : (small ? 30 : 42);
+var rWs = Math.max(78, Math.min(190, ringW * 0.24));
 var batW = 18;
 
 var titleMap = {
@@ -803,10 +814,11 @@ txt(ctx, noteMap[mode], Lx + ringW / 2, yNote, { size: 10.5, align: 'center', co
 }
 
 if (!compact && !small) {
-var panW = Math.min(Rx - Lx - 84, 470);
-var panH = 150;
-var px0 = Lx + 42, py0 = ringTop + 82, px1 = px0 + panW, py1 = py0 + panH;
-if (ringBot - py1 > 22 && panW > 300) {
+var panW = Math.min(Rx - Lx - 72, 620);
+var availH = ringBot - (ringTop + 74) - 16;
+var panH = Math.min(availH, 190);
+var px0 = Lx + 36, py0 = ringTop + 74, px1 = px0 + panW, py1 = py0 + panH;
+if (panH > 108 && panW > 280) {
 box(ctx, px0 - 12, py0 - 14, panW + 24, panH + 24,
 { fill: 'rgba(255,255,255,0.022)', stroke: rgb(C.ink, 0.1), w: 1 });
 
@@ -877,7 +889,7 @@ txt(ctx, 'R_A = 0（导线）', midR, ayB + 12, { size: 8.5, align: 'center', co
 
 if (!micro) {
 var hasDelta = !isIdeal && mode !== 'volt' && mode !== 'amp';
-var deltaW = hasDelta ? (R.w >= 700 ? 210 : 150) : 0;
+var deltaW = hasDelta ? (R.w >= 700 ? Math.max(190, R.w * 0.16) : 150) : 0;
 var availW = R.w - pad * 2 - 28 - deltaW;
 var rTop = readTop, rBot = readBot;
 box(ctx, R.x + pad - 2, rTop, R.w - pad * 2 + 4, rBot - rTop,
@@ -896,7 +908,9 @@ items = [['U读', P.fmtU(U), C.blue],
 ['R测', P.fmtR(U / I), C.yellow]];
 }
 
-var vSize = 40;
+var bandH = rBot - rTop;
+var maxByHeight = Math.floor((bandH - 46) / 1.42);
+var vSize = Math.max(15, Math.min(40, maxByHeight));
 function rowW(sz, labSz) {
 var wsum = 0, i;
 for (i = 0; i < items.length; i++) {
@@ -918,13 +932,19 @@ var wv = txt(ctx, val, cx, y1, { size: vSize, weight: 700, color: col });
 cx += Math.max(wv, tw(ctx, lab, labSize)) + gap;
 }
 
-var twoLine = (rBot - rTop) >= (vSize * 0.80 + 18) + (vSize * 0.62) + 22;
+var twoLine = bandH >= (vSize * 0.80 + 18) + (vSize * 0.62) + 22;
 if (!twoLine) {
+
 if (!isIdeal && mode !== 'volt' && mode !== 'amp') {
 var dOnly = (mode === 'int') ? P.deltaInt(rx, m) : P.deltaExt(rx, m);
-txt(ctx, 'δ = ' + P.fmtS(dOnly), R.x + R.w - pad - 16, y1,
-{ size: Math.max(15, Math.round(vSize * 0.66)), weight: 700, align: 'right',
-color: (mode === 'int') ? C.red : C.blue });
+var dTxt0 = 'δ = ' + P.fmtS(dOnly);
+var dSz = Math.max(15, Math.round(vSize * 0.66));
+var dW = tw(ctx, dTxt0, dSz, 700);
+var lastRight = cx - gap;
+if (R.x + R.w - pad - 16 - dW > lastRight + 12) {
+txt(ctx, dTxt0, R.x + R.w - pad - 16, y1,
+{ size: dSz, weight: 700, align: 'right', color: (mode === 'int') ? C.red : C.blue });
+}
 }
 return;
 }
@@ -956,9 +976,8 @@ txt(ctx, 'δ = ' + P.fmtS(dHere), R.x + R.w - pad - 16, y3,
 }
 
 if (!micro && st.allow && st.allow.rx) {
-var sg = sliderGeom(R.w + R.x * 0, R.h);
-var sx0 = R.x + pad + (R.h > 420 ? 44 : 8), sx1 = R.x + R.w - pad - 12;
-var yS = (R.h < 340) ? (readTop - 22) : (readBot + 18);
+var sg = sliderGeom(R.w, R.h, R);
+var sx0 = sg.x0, sx1 = sg.x1, yS = sg.y;
 if (sx1 - sx0 > 80) {
 line(ctx, sx0, yS, sx1, yS, { color: rgb(C.ink, 0.2), w: 3 });
 var px = sx0 + (sx1 - sx0) * P.tOfRx(rx);
