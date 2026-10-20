@@ -622,12 +622,16 @@ var twoRow = small || R.h < 430;
 
 var yTitle = R.y + 15, yBanner = R.y + 42;
 var ySlider = R.y + R.h - 14;
-var yRead = micro ? (R.y + R.h - 6) : (ySlider - (twoRow ? 62 : 22));
-var yDecomp = yRead - (small ? 42 : 48);
-var yNote = yDecomp - 16;
+
+var readBot = R.y + R.h - (micro ? 6 : 32);
+var readH = micro ? 0 : (R.w >= 700 ? 132 : 96);
+var readTop = readBot - readH;
+var yRead = readTop;
+var yDecomp = readTop;
+var yNote = readTop - 16;
 var bannerBottom = st.banner ? (yBanner + (small ? 13 : 15) * 0.9 + 8) : (R.y + 44);
 var bandTop = micro ? (st.banner ? bannerBottom : (R.y + 30)) : Math.max(R.y + 40, bannerBottom);
-var bandBot = micro ? (R.y + R.h - 10) : (compact ? (yRead - 46) : (yDecomp - 26));
+var bandBot = micro ? (R.y + R.h - 10) : (readTop - 26);
 
 var mR = micro ? 11 : (small ? 15 : 22);
 var vGap = mR * 2 + (compact ? 22 : 46);
@@ -871,57 +875,90 @@ txt(ctx, 'R_A = 0（导线）', midR, ayB + 12, { size: 8.5, align: 'center', co
 }
 }
 
-if (!isIdeal && !compact && !micro && mode !== 'volt' && mode !== 'amp') {
-var bx0 = R.x + pad + 6, by0 = yDecomp;
-var realV, extraV, extraLab, color2, unitLab;
-if (mode === 'int') {
-realV = a.Ux; extraV = a.Ua; extraLab = 'I·R_A'; color2 = C.red; unitLab = 'U读';
+if (!micro) {
+var hasDelta = !isIdeal && mode !== 'volt' && mode !== 'amp';
+var deltaW = hasDelta ? (R.w >= 700 ? 210 : 150) : 0;
+var availW = R.w - pad * 2 - 28 - deltaW;
+var rTop = readTop, rBot = readBot;
+box(ctx, R.x + pad - 2, rTop, R.w - pad * 2 + 4, rBot - rTop,
+{ fill: 'rgba(255,255,255,0.035)', stroke: rgb(C.ink, 0.12), w: 1 });
+
+var items = [];
+if (mode === 'volt') {
+items = [['U真', P.fmtU(vm.trueU), rgb(C.ink, 0.82)],
+['U读', P.fmtU(vm.U), C.blue]];
+} else if (mode === 'amp') {
+items = [['I真', P.fmtI(am.trueI), rgb(C.ink, 0.82)],
+['I读', P.fmtI(am.I), C.red]];
 } else {
-realV = b.Irx; extraV = b.Iv; extraLab = 'I_V'; color2 = C.blue; unitLab = 'I读';
-}
-var fU = (mode === 'int') ? P.fmtU : P.fmtI;
-var xx = bx0;
-xx += txt(ctx, unitLab + ' = ', xx, by0, { size: 11, color: rgb(C.ink, 0.6) });
-xx += txt(ctx, fU(realV + extraV), xx, by0, { size: 12.5, weight: 700, color: C.ink });
-xx += txt(ctx, '  =  ', xx, by0, { size: 11, color: rgb(C.ink, 0.45) });
-xx += txt(ctx, (mode === 'int' ? 'Rₓ 两端 ' : '流过 Rₓ 的 '), xx, by0, { size: 11, color: rgb(C.ink, 0.6) });
-xx += txt(ctx, fU(realV), xx, by0, { size: 12, weight: 700, color: rgb(C.ink, 0.85) });
-xx += txt(ctx, '  +  ', xx, by0, { size: 11, color: rgb(C.ink, 0.45) });
-xx += txt(ctx, extraLab + ' ', xx, by0, { size: 11, color: color2 });
-xx += txt(ctx, fU(extraV), xx, by0, { size: 12, weight: 700, color: color2 });
-xx += txt(ctx, '（多读）', xx, by0, { size: 10, color: rgb(color2, 0.7) });
-if (xx < R.x + R.w - pad - 70) {
-txt(ctx, '占 ' + P.fmtP(extraV / (realV + extraV), 2), R.x + R.w - pad - 6, by0,
-{ size: 10.5, align: 'right', color: rgb(color2, 0.85) });
-}
+items = [['U读', P.fmtU(U), C.blue],
+['I读', P.fmtI(I), C.red],
+['R测', P.fmtR(U / I), C.yellow]];
 }
 
-var cellN = 0, cellPerRow = twoRow ? 2 : 4;
-var yR = yRead, x = R.x + pad + 6, lastY = yRead;
-function cell(lab, val, color) {
-if (cellN >= cellPerRow) { yR += (small ? 22 : 24); x = R.x + pad + 6; cellN = 0; }
-cellN++;
-txt(ctx, lab, x, yR, { size: small ? 10 : 11.5, color: rgb(color, 0.72) });
-x += tw(ctx, lab, small ? 10 : 11.5) + 6;
-txt(ctx, val, x, yR, { size: small ? 12.5 : 15, weight: 700, color: color });
-x += tw(ctx, val, small ? 12.5 : 15, 700) + (small ? 12 : 20);
-lastY = Math.max(lastY, yR);
+var vSize = 40;
+function rowW(sz, labSz) {
+var wsum = 0, i;
+for (i = 0; i < items.length; i++) {
+wsum += Math.max(tw(ctx, items[i][1], sz, 700), tw(ctx, items[i][0], labSz)) + (R.w >= 700 ? 42 : 18);
 }
-if (micro) {  }
-else if (mode === 'volt') {
-cell('U真', P.fmtU(vm.trueU), C.ink); cell('U读', P.fmtU(vm.U), C.blue); cell('δ', P.fmtS(vm.err), C.red);
+return wsum - (R.w >= 700 ? 42 : 18);
+}
+var labSize = R.w >= 700 ? 12 : 10.5;
+while (vSize > 15 && rowW(vSize, labSize) > availW) { vSize -= 2; }
+labSize = vSize >= 26 ? 12 : (vSize >= 20 ? 11 : 10);
+
+var y1 = rTop + vSize * 0.90 + 20;
+var cx = R.x + pad + 14;
+var i, gap = R.w >= 700 ? 42 : 18;
+for (i = 0; i < items.length; i++) {
+var lab = items[i][0], val = items[i][1], col = items[i][2];
+txt(ctx, lab, cx, y1 - vSize * 1.02, { size: labSize, color: rgb(col, 0.75) });
+var wv = txt(ctx, val, cx, y1, { size: vSize, weight: 700, color: col });
+cx += Math.max(wv, tw(ctx, lab, labSize)) + gap;
+}
+
+var twoLine = (rBot - rTop) >= (vSize * 0.80 + 18) + (vSize * 0.62) + 22;
+if (!twoLine) {
+if (!isIdeal && mode !== 'volt' && mode !== 'amp') {
+var dOnly = (mode === 'int') ? P.deltaInt(rx, m) : P.deltaExt(rx, m);
+txt(ctx, 'δ = ' + P.fmtS(dOnly), R.x + R.w - pad - 16, y1,
+{ size: Math.max(15, Math.round(vSize * 0.66)), weight: 700, align: 'right',
+color: (mode === 'int') ? C.red : C.blue });
+}
+return;
+}
+var y3 = rBot - (R.w >= 700 ? 16 : 12);
+var ls2 = R.w >= 700 ? 13 : 11;
+var vs2 = Math.max(15, Math.round(vSize * 0.62));
+var xs = R.x + pad + 14;
+if (mode === 'volt') {
+xs += txt(ctx, '偏小 ', xs, y3, { size: ls2, color: rgb(C.blue, 0.8) });
+xs += txt(ctx, P.fmtS(vm.err), xs, y3, { size: vs2, weight: 700, color: C.blue });
+xs += txt(ctx, '　R_V 分走 ' + P.fmtI(vm.Iv), xs, y3, { size: ls2, color: rgb(C.blue, 0.62) });
 } else if (mode === 'amp') {
-cell('I真', P.fmtI(am.trueI), C.ink); cell('I读', P.fmtI(am.I), C.red); cell('δ', P.fmtS(am.err), C.red);
+xs += txt(ctx, '偏小 ', xs, y3, { size: ls2, color: rgb(C.red, 0.8) });
+xs += txt(ctx, P.fmtS(am.err), xs, y3, { size: vs2, weight: 700, color: C.red });
+xs += txt(ctx, '　R_A 吃掉 ' + P.fmtU(am.Ua), xs, y3, { size: ls2, color: rgb(C.red, 0.62) });
+} else if (isIdeal) {
+txt(ctx, '理想表：δ = 0，R测 恒等于 Rₓ', xs, y3, { size: ls2, color: rgb(C.green, 0.92) });
 } else {
-cell('U读', P.fmtU(U), C.blue); cell('I读', P.fmtI(I), C.red);
-cell('R测', P.fmtR(U / I), C.yellow);
-if (R.h > 200) { cell('Rₓ', P.fmtR(rx), rgb(C.ink, 0.85)); }
+var e2 = (mode === 'int') ? a.Ua : b.Iv;
+var l2 = (mode === 'int') ? '多读 I·R_A' : '多读 I_V';
+var c2 = (mode === 'int') ? C.red : C.blue;
+var f2 = (mode === 'int') ? P.fmtU : P.fmtI;
+xs += txt(ctx, l2 + ' ', xs, y3, { size: ls2, color: rgb(c2, 0.85) });
+xs += txt(ctx, f2(e2), xs, y3, { size: vs2, weight: 700, color: c2 });
+var dHere = (mode === 'int') ? P.deltaInt(rx, m) : P.deltaExt(rx, m);
+txt(ctx, 'δ = ' + P.fmtS(dHere), R.x + R.w - pad - 16, y3,
+{ size: Math.max(17, Math.round(vSize * 0.80)), weight: 700, align: 'right', color: c2 });
+}
 }
 
 if (!micro && st.allow && st.allow.rx) {
 var sg = sliderGeom(R.w + R.x * 0, R.h);
 var sx0 = R.x + pad + (R.h > 420 ? 44 : 8), sx1 = R.x + R.w - pad - 12;
-var yS = (R.h < 340) ? (yRead - 24) : (R.y + R.h - 14);
+var yS = (R.h < 340) ? (readTop - 22) : (readBot + 18);
 if (sx1 - sx0 > 80) {
 line(ctx, sx0, yS, sx1, yS, { color: rgb(C.ink, 0.2), w: 3 });
 var px = sx0 + (sx1 - sx0) * P.tOfRx(rx);
